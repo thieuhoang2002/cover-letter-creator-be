@@ -10,6 +10,8 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserService;
+import org.springframework.security.oauth2.core.oidc.user.DefaultOidcUser;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
@@ -31,15 +33,34 @@ public class SecurityConfig {
     }
 
     @Bean
+    public OidcUserService oidcUserService() {
+        OidcUserService oidcUserService = new OidcUserService();
+        return oidcUserService;
+    }
+    
+    @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/users/register", "/api/users/login").permitAll()
+                .requestMatchers("/api/users/register", "/api/users/login", "/api/users/github-login").permitAll()
                 .requestMatchers("/api/templates").permitAll()// Cho phép truy cập công khai vào API đăng ký
+                .requestMatchers("api/users/google-login").permitAll()
+                .requestMatchers("api/pdf/*").permitAll()
+                .requestMatchers("api/users/me").permitAll()
                 .anyRequest().authenticated() // Các request khác yêu cầu xác thực
             )
+            .oauth2Login(oauth2 -> oauth2
+                    .userInfoEndpoint(userInfo -> userInfo.oidcUserService(oidcUserService())) // Cấu hình lấy thông tin người dùng
+                    .successHandler((request, response, authentication) -> {
+                        DefaultOidcUser oidcUser = (DefaultOidcUser) authentication.getPrincipal();
+                        String email = oidcUser.getAttribute("email") != null ? oidcUser.getAttribute("email") : oidcUser.getAttribute("login") + "@github.com";
+                        String role = "user"; // Gán mặc định, có thể lấy từ DB
+                        String token = jwtUtil.generateToken(email, role);
+                        response.sendRedirect("http://localhost:5137/auth-callback?token=" + token); // Chuyển hướng về frontend
+                    })
+                )
             .addFilterBefore(new JwtAuthenticationFilter(jwtUtil, userDetailsService), UsernamePasswordAuthenticationFilter.class)
             .formLogin(form -> form.disable()); // Tắt form login mặc định
 

@@ -1,8 +1,10 @@
 package cover.letter.creator.controller;
 
+import cover.letter.creator.config.JwtUtil;
 import cover.letter.creator.model.User;
 import cover.letter.creator.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -15,7 +17,10 @@ import java.util.Optional;
 public class UserController {
     @Autowired
     private UserService userService;
-
+    
+    @Autowired
+    private JwtUtil jwtUtil;
+    
     @GetMapping
     public List<User> getAllUsers() {
         return userService.getAllUsers();
@@ -50,5 +55,18 @@ public class UserController {
             return ResponseEntity.ok().build();
         }
         return ResponseEntity.notFound().build();
+    }
+    
+    @GetMapping("/me")
+    public ResponseEntity<User> getCurrentUser(@RequestHeader("Authorization") String token) {
+        try {
+            String jwt = token.replace("Bearer ", "");
+            String email = jwtUtil.extractEmail(jwt);
+            Optional<User> user = userService.getUserByEmail(email);
+            return user.map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
     }
 }

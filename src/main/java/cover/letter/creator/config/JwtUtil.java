@@ -13,6 +13,8 @@ import org.springframework.stereotype.Component;
 
 import java.security.Key;
 import java.util.Date;
+import java.util.Map;
+
 import javax.crypto.SecretKey;
 @Component
 public class JwtUtil {
@@ -38,6 +40,16 @@ public class JwtUtil {
             .compact();
     }
 
+    public String generateTokenWithClaims(String email, Map<String, Object> claims) {
+        return Jwts.builder()
+            .subject(email)
+            .claims(claims)
+            .issuedAt(new Date())
+            .expiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
+            .signWith(getSigningKey(), Jwts.SIG.HS512)
+            .compact();
+    }
+    
     // Lấy email từ token
     public String extractEmail(String token) {
         return extractClaims(token).getSubject();
@@ -56,6 +68,10 @@ public class JwtUtil {
         } catch (Exception e) {
             return false;
         }
+    }
+    
+    public String extractAvatarUrl(String token) {
+        return extractClaims(token).get("avatar_url", String.class);
     }
 
     private Claims extractClaims(String token) {

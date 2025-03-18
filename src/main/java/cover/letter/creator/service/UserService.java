@@ -24,25 +24,28 @@ public class UserService {
     public Optional<User> getUserById(Integer id) {
         return userRepository.findById(id);
     }
+    
+    public Optional<User> getUserByEmail(String email) {
+        return userRepository.findByEmail(email); // Đảm bảo repository có phương thức này
+    }
 
     public User registerUser(User user) {
-        // Mã hóa mật khẩu trước khi lưu
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
-        // Gán vai trò mặc định (ví dụ: "user")
-        user.setRole("user");
+        if (user.getPassword() != null && !user.getPassword().isEmpty()) {
+            user.setPassword(passwordEncoder.encode(user.getPassword()));
+        }
+        if (user.getRole() == null) {
+            user.setRole("user"); // Gán mặc định nếu không có role
+        }
         return userRepository.save(user);
     }
 
     public User updateUser(Integer id, User updatedUser) {
-        // Tìm user theo ID
         Optional<User> existingUserOpt = userRepository.findById(id);
         if (!existingUserOpt.isPresent()) {
             throw new RuntimeException("Không tìm thấy người dùng với ID: " + id);
         }
 
         User existingUser = existingUserOpt.get();
-
-        // Cập nhật các trường thông tin
         if (updatedUser.getName() != null) {
             existingUser.setName(updatedUser.getName());
         }
@@ -50,7 +53,6 @@ public class UserService {
             existingUser.setEmail(updatedUser.getEmail());
         }
         if (updatedUser.getPassword() != null && !updatedUser.getPassword().isEmpty()) {
-            // Mã hóa mật khẩu mới nếu có thay đổi
             existingUser.setPassword(passwordEncoder.encode(updatedUser.getPassword()));
         }
         if (updatedUser.getAddress() != null) {
@@ -62,16 +64,14 @@ public class UserService {
         if (updatedUser.getBirthday() != null) {
             existingUser.setBirthday(updatedUser.getBirthday());
         }
-         //Role không thay đổi mặc định, nếu muốn cho phép cập nhật role, uncomment dòng dưới
-//         if (updatedUser.getRole() != null) {
-//             existingUser.setRole(updatedUser.getRole());
-//         }
-
-        // Lưu user đã cập nhật
         return userRepository.save(existingUser);
     }
 
     public void deleteUser(Integer id) {
         userRepository.deleteById(id);
+    }
+    
+    public User updateUser(User user) {
+        return userRepository.save(user); // Cập nhật user, bao gồm avatar_url
     }
 }
