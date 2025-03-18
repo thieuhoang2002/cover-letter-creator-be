@@ -45,10 +45,10 @@ public class SecurityConfig {
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/users/register", "/api/users/login", "/api/users/github-login").permitAll()
-                .requestMatchers("/api/templates").permitAll()// Cho phép truy cập công khai vào API đăng ký
+                .requestMatchers("/api/templates/**").permitAll()
                 .requestMatchers("api/users/google-login").permitAll()
-                .requestMatchers("api/pdf/*").permitAll()
-                .requestMatchers("api/users/me").permitAll()
+                .requestMatchers("api/pdf/**").permitAll()
+                .requestMatchers("api/users/**").permitAll()
                 .anyRequest().authenticated() // Các request khác yêu cầu xác thực
             )
             .oauth2Login(oauth2 -> oauth2
