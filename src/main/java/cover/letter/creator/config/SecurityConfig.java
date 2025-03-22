@@ -41,11 +41,12 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+        	.cors(cors -> cors.configure(http))
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/users/register", "/api/users/login", "/api/users/github-login").permitAll()
-                .requestMatchers("/api/templates/**").permitAll()
+                .requestMatchers("/api/templates/**").authenticated()
                 .requestMatchers("api/users/google-login").permitAll()
                 .requestMatchers("api/pdf/**").permitAll()
                 .requestMatchers("api/users/**").permitAll()

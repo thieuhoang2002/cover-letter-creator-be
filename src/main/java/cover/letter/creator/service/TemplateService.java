@@ -16,6 +16,10 @@ public class TemplateService {
     public List<Template> getAllTemplates() {
         return templateRepository.findAll();
     }
+    
+    public List<Template> getActiveTemplates() {
+        return templateRepository.findByStatus("active"); // Sử dụng phương thức vừa thêm
+    }
 
     public Optional<Template> getTemplateById(Integer id) {
         return templateRepository.findById(id);

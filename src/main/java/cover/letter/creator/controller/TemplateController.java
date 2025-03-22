@@ -20,6 +20,11 @@ public class TemplateController {
     public List<Template> getAllTemplates() {
         return templateService.getAllTemplates();
     }
+    
+    @GetMapping("/all")
+    public List<Template> getTemplatesActive(){
+    	return templateService.getActiveTemplates();
+    }
 
     @GetMapping("/{id}")
     public ResponseEntity<Template> getTemplateById(@PathVariable Integer id) {
