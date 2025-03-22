@@ -31,3 +31,6 @@ build/
 
 ### VS Code ###
 .vscode/
+
+# Thêm file application.properties để bỏ theo dõi
+src/main/resources/application.properties
