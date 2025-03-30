@@ -1,22 +1,39 @@
 package cover.letter.creator.controller;
 
 import cover.letter.creator.config.JwtUtil;
+import cover.letter.creator.model.Template;
 import cover.letter.creator.model.User;
+import cover.letter.creator.service.TemplateService;
 import cover.letter.creator.service.UserService;
+import jakarta.transaction.Transactional;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 
 @RestController
-@RequestMapping("/api/users")
+@RequestMapping("/api/users/profile")
 @CrossOrigin 
 public class UserController {
+	
+	private static final Logger logger = LoggerFactory.getLogger(UserController.class);
+	
     @Autowired
     private UserService userService;
+    
+    @Autowired
+    private TemplateService templateService;
     
     @Autowired
     private JwtUtil jwtUtil;
@@ -57,16 +74,74 @@ public class UserController {
         return ResponseEntity.notFound().build();
     }
     
+//    @GetMapping("/me")
+//    public ResponseEntity<User> getCurrentUser(@RequestHeader("Authorization") String token) {
+//        try {
+//            String jwt = token.replace("Bearer ", "");
+//            String email = jwtUtil.extractEmail(jwt);
+//            Optional<User> user = userService.getUserByEmail(email);
+//            return user.map(ResponseEntity::ok)
+//                .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build());
+//        } catch (Exception e) {
+//            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+//        }
+//    }
+    
     @GetMapping("/me")
     public ResponseEntity<User> getCurrentUser(@RequestHeader("Authorization") String token) {
         try {
             String jwt = token.replace("Bearer ", "");
             String email = jwtUtil.extractEmail(jwt);
+            
+            // Lấy User + Loved Templates
             Optional<User> user = userService.getUserByEmail(email);
-            return user.map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build());
+
+            if (user.isPresent()) {
+                logger.info("User: {}", user.get().getEmail());
+                logger.info("Loved Templates: {}", user.get().getLovedTemplates().size());
+                user.get().getLovedTemplates().forEach(t -> logger.info("Template: {}", t.getName()));
+
+                return ResponseEntity.ok(user.get());
+            } else {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+            }
         } catch (Exception e) {
+            logger.error("Error getting current user: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+    }
+
+    
+    
+    @PostMapping("/me/love-template/{templateId}")
+    public ResponseEntity<String> toggleFavoriteTemplate(
+            @RequestHeader("Authorization") String token,
+            @PathVariable Integer templateId) {
+        try {
+            String jwt = token.replace("Bearer ", "");
+            String email = jwtUtil.extractEmail(jwt);
+            Optional<User> userOpt = userService.getUserByEmail(email);
+
+            if (!userOpt.isPresent()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+            }
+
+            User user = userOpt.get();
+            Optional<Template> templateOpt = templateService.getTemplateById(templateId);
+
+            if (!templateOpt.isPresent()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Template not found");
+            }
+
+            Template template = templateOpt.get();
+            userService.toggleFavoriteTemplate(user, template);
+
+            return ResponseEntity.ok("Favorite toggled successfully");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error toggling favorite: " + e.getMessage());
         }
     }
 }

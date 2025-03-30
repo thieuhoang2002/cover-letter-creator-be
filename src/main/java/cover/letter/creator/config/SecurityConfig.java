@@ -45,11 +45,12 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/users/register", "/api/users/login", "/api/users/github-login").permitAll()
-                .requestMatchers("/api/templates/**").authenticated()
-                .requestMatchers("api/users/google-login").permitAll()
-                .requestMatchers("api/pdf/**").permitAll()
-                .requestMatchers("api/users/**").permitAll()
+                .requestMatchers("/api/users/profile/register", "/api/users/login", "/api/users/github-login").permitAll() //api quản lý login
+                .requestMatchers("api/users/google-login").permitAll() //api login gg
+                .requestMatchers("api/templates/all").permitAll() //api xem danh sách template
+                .requestMatchers("/api/templates/**").authenticated() //api quản lý template
+                .requestMatchers("api/pdf/**").authenticated() //api xuất pdf
+                .requestMatchers("api/users/**").authenticated() //api quản lý thông tin users
                 .anyRequest().authenticated() // Các request khác yêu cầu xác thực
             )
             .oauth2Login(oauth2 -> oauth2

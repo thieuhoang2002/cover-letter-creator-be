@@ -3,8 +3,13 @@ package cover.letter.creator.model;
 import jakarta.persistence.*;
 import lombok.Data;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 @Entity
 @Table(name = "users")
@@ -40,11 +45,14 @@ public class User {
     private List<CoverLetterPdf> coverLetters;
 
     // Mối quan hệ Many-to-Many với Template
+//    @ManyToMany()
     @ManyToMany
     @JoinTable(
         name = "user_loved_templates",
         joinColumns = @JoinColumn(name = "user_id"),
         inverseJoinColumns = @JoinColumn(name = "template_id")
     )
-    private Set<Template> lovedTemplates;
+    //@JsonIgnore // Ngăn Jackson serialize lovedTemplates
+//    private Set<Template> lovedTemplates;
+    private Set<Template> lovedTemplates = new HashSet<>();
 }
