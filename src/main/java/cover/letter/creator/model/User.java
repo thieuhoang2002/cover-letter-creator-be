@@ -55,4 +55,6 @@ public class User {
     //@JsonIgnore // Ngăn Jackson serialize lovedTemplates
 //    private Set<Template> lovedTemplates;
     private Set<Template> lovedTemplates = new HashSet<>();
+    
+
 }

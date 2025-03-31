@@ -31,4 +31,5 @@ public class PdfController {
             return ResponseEntity.status(500).body(null);
         }
     }
+
 }

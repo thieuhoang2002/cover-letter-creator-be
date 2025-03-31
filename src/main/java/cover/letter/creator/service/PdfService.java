@@ -1,10 +1,20 @@
 package cover.letter.creator.service;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.Files;
+import java.io.FileOutputStream;
+import java.io.IOException;
 
 import com.itextpdf.html2pdf.ConverterProperties;
 import com.itextpdf.html2pdf.HtmlConverter;
 import com.itextpdf.io.font.FontProgram;
 import com.itextpdf.io.font.FontProgramFactory;
 import com.itextpdf.layout.font.FontProvider;
+
+import cover.letter.creator.model.User;
+import cover.letter.creator.repository.UserRepository;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
@@ -13,6 +23,9 @@ import java.io.InputStream;
 @Service
 public class PdfService {
 
+	@Autowired
+	private UserRepository userRepository;
+	
     public byte[] generatePdfFromHtml(String htmlContent) {
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
             System.out.println("HTML nhận được: " + htmlContent);
