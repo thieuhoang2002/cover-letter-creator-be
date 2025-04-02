@@ -32,9 +32,9 @@ public class GoogleDriveController {
 
             // Chia sẻ file với tài khoản cá nhân
             Permission permission = new Permission()
-                    .setType("user")
-                    .setRole("writer") // Quyền ghi, có thể đổi thành "reader" nếu chỉ cần xem
-                    .setEmailAddress("thhoang0903@gmail.com"); // Email cá nhân của bạn
+                    .setType("anyone")
+                    .setRole("reader"); // Quyền ghi "writer", có thể đổi thành "reader" nếu chỉ cần xem
+//                    .setEmailAddress("thhoang0903@gmail.com"); // Email cá nhân của bạn
             driveService.permissions().create(fileId, permission).execute();
 
             // Trả về phản hồi thành công với File ID

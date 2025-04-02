@@ -55,10 +55,11 @@ public class GoogleDriveConfig {
 
         // Chia sẻ thư mục với tài khoản cá nhân
         Permission permission = new Permission()
-                .setType("user")
-                .setRole("writer")
-                .setEmailAddress("thhoang0903@gmail.com");
+                .setType("anyone")
+                .setRole("reader");
+//                .setEmailAddress("thhoang0903@gmail.com");
         drive.permissions().create(folderId, permission).execute();
+        logger.info("Folder '{}' has been made public with 'Anyone with the link' access.", FOLDER_NAME);
 
         logger.info("Google Drive service initialized successfully.");
         return drive;
