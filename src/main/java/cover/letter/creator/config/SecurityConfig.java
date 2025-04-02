@@ -53,6 +53,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/templates/**").authenticated() //api quản lý template
                 .requestMatchers("api/pdf/**").authenticated() //api xuất pdf
                 .requestMatchers("api/users/**").authenticated() //api quản lý thông tin users
+                .requestMatchers("/api/drive/**").permitAll()
                 .anyRequest().authenticated() // Các request khác yêu cầu xác thực
             )
             .exceptionHandling(exception -> exception

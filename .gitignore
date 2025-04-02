@@ -34,3 +34,5 @@ build/
 
 # Thêm file application.properties để bỏ theo dõi
 src/main/resources/application.properties
+
+src/main/resources/calendar-438415-5bdb470fb244.json
