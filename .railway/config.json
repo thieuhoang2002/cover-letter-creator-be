@@ -1,4 +1,0 @@
-{
-  "buildCommand": "./mvnw clean install -DskipTests",
-  "startCommand": "java -jar target/your-app.jar"
-}
