@@ -25,6 +25,11 @@
             <artifactId>jakarta.validation-api</artifactId>
             <version>3.1.1</version>
         </dependency>
+        <dependency>
+		    <groupId>org.springframework.boot</groupId>
+		    <artifactId>spring-boot-starter-mail</artifactId>
+		    <version>3.4.3</version>
+		</dependency>
         <!-- Spring AI OpenAI Starter -->
         <!-- Spring Boot Starters -->
         <dependency>
@@ -190,6 +195,7 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
+                    <mainClass>cover.letter.creator.CoverLetterCreatorApplication</mainClass> <!-- 👈 thêm dòng này -->
                     <excludes>
                         <exclude>
                             <groupId>org.projectlombok</groupId>

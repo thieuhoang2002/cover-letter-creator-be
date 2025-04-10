@@ -165,6 +165,30 @@ public class UserService {
             throw e;
         }
     }
+    
+    @Transactional
+    public boolean changePassword(String email, String oldPassword, String newPassword) {
+        Optional<User> userOpt = userRepository.findByEmail(email);
+        if (!userOpt.isPresent()) {
+            throw new RuntimeException("User not found");
+        }
+
+        User user = userOpt.get();
+
+        // So sánh mật khẩu cũ
+        if (!passwordEncoder.matches(oldPassword, user.getPassword())) {
+            return false; // Mật khẩu cũ không đúng
+        }
+
+        // Không cho đổi nếu mật khẩu mới giống mật khẩu cũ
+        if (passwordEncoder.matches(newPassword, user.getPassword())) {
+            throw new IllegalArgumentException("Mật khẩu mới không được trùng với mật khẩu hiện tại");
+        }
+
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+        return true;
+    }
 
     
 }

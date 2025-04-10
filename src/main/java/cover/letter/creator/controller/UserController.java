@@ -1,6 +1,7 @@
 package cover.letter.creator.controller;
 
 import cover.letter.creator.config.JwtUtil;
+import cover.letter.creator.dto.ChangePasswordRequest;
 import cover.letter.creator.model.Template;
 import cover.letter.creator.model.User;
 import cover.letter.creator.service.TemplateService;
@@ -144,4 +145,30 @@ public class UserController {
                     .body("Error toggling favorite: " + e.getMessage());
         }
     }
+    
+    @PostMapping("/change-password")
+    public ResponseEntity<String> changePassword(
+            @RequestHeader("Authorization") String token,
+            @RequestBody ChangePasswordRequest request) {
+
+        try {
+            String jwt = token.replace("Bearer ", "");
+            String email = jwtUtil.extractEmail(jwt);
+
+            boolean success = userService.changePassword(email, request.getOldPassword(), request.getNewPassword());
+
+            return success
+                    ? ResponseEntity.ok("Đổi mật khẩu thành công!")
+                    : ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Mật khẩu cũ sai!");
+
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        } catch (Exception e) {
+            logger.error("Error changing password: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Lỗi khi đổi mật khẩu!");
+        }
+    }
+
+
 }
+
