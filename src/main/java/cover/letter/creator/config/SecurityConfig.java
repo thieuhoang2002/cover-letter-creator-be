@@ -51,9 +51,10 @@ public class SecurityConfig {
                 .requestMatchers("api/users/google-login").permitAll() //api login gg
                 .requestMatchers("api/templates/all").permitAll() //api xem danh sách template
                 .requestMatchers("/api/templates/**").authenticated() //api quản lý template
-                .requestMatchers("api/pdf/**").authenticated() //api xuất pdf
-                .requestMatchers("api/users/**").authenticated() //api quản lý thông tin users
+                .requestMatchers("/api/pdf/**").authenticated() //api xuất pdf
+                .requestMatchers("/api/users/**").authenticated() //api quản lý thông tin users
                 .requestMatchers("/api/drive/**").permitAll()
+                .requestMatchers("/api/auth/**").permitAll()
                 .anyRequest().authenticated() // Các request khác yêu cầu xác thực
             )
             .exceptionHandling(exception -> exception
