@@ -136,6 +136,7 @@
             <artifactId>spring-security-test</artifactId>
             <scope>test</scope>
         </dependency>
+		<!-- https://mvnrepository.com/artifact/com.itextpdf/html2pdf -->
 		<dependency>
 		    <groupId>com.itextpdf</groupId>
 		    <artifactId>html2pdf</artifactId>
