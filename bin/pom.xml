@@ -15,7 +15,8 @@
 	<description>Cover Letter Creator</description>
 	<properties>
         <java.version>21</java.version>
-	    <itext.version>8.0.2</itext.version>
+        <itext.version>9.2.0-SNAPSHOT</itext.version>
+        <html2pdf.version>6.2.0-SNAPSHOT</html2pdf.version>
     </properties>
     <dependencies>
         <!-- Jakarta Validation API -->
@@ -86,6 +87,12 @@
 		    <version>0.12.5</version>
 		    <scope>runtime</scope>
 		</dependency>
+		<!-- https://mvnrepository.com/artifact/com.google.auth/google-auth-library-oauth2-http -->
+		<dependency>
+		    <groupId>com.google.auth</groupId>
+		    <artifactId>google-auth-library-oauth2-http</artifactId>
+		    <version>1.33.1</version>
+		</dependency>
 		<!-- https://mvnrepository.com/artifact/com.google.api-client/google-api-client -->
 		<dependency>
 		    <groupId>com.google.api-client</groupId>
@@ -136,17 +143,38 @@
             <artifactId>spring-security-test</artifactId>
             <scope>test</scope>
         </dependency>
-		<dependency>
-		    <groupId>com.itextpdf</groupId>
-		    <artifactId>html2pdf</artifactId>
-		    <version>4.0.3</version>
-		</dependency>
-
+        <!-- iText Dependencies -->
+        <dependency>
+            <groupId>com.itextpdf</groupId>
+            <artifactId>itext7-core</artifactId>
+            <version>${itext.version}</version>
+            <type>pom</type>
+        </dependency>
+        <dependency>
+            <groupId>com.itextpdf</groupId>
+            <artifactId>html2pdf</artifactId>
+            <version>${html2pdf.version}</version>
+        </dependency>
     </dependencies>
 
     <!-- Repositories for iText Snapshots -->
     <repositories>
-
+        <repository>
+            <id>itext-snapshot</id>
+            <name>iText Repository - snapshots</name>
+            <url>https://repo.itextsupport.com/snapshot</url>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+        <repository>
+            <id>itext-releases</id>
+            <name>iText Repository - releases</name>
+            <url>https://repo.itextsupport.com/releases</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
     </repositories>
 
     <build>
