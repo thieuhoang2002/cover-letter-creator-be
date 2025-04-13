@@ -12,4 +12,5 @@ import org.springframework.stereotype.Repository;
 public interface TemplateRepository extends JpaRepository<Template, Integer> {
 	List<Template> findByStatus(String status); 
 	Optional<Template> findByName(String name);
+	List<Template> findTop5ByStatusOrderByViewsDesc(String status);
 }

@@ -28,7 +28,7 @@ public class TemplateController {
 
     @GetMapping("/{id}")
     public ResponseEntity<Template> getTemplateById(@PathVariable Integer id) {
-        Optional<Template> template = templateService.getTemplateById(id);
+        Optional<Template> template = templateService.getTemplateAndIncreaseView(id);
         return template.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
@@ -55,4 +55,10 @@ public class TemplateController {
         }
         return ResponseEntity.notFound().build();
     }
+    
+    @GetMapping("/top-viewed")
+    public List<Template> getTopViewedTemplates() {
+        return templateService.getTopViewedTemplates();
+    }
+
 }
