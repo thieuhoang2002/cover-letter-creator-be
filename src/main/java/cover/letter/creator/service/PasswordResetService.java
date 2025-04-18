@@ -1,6 +1,7 @@
 package cover.letter.creator.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import cover.letter.creator.model.PasswordResetToken;
@@ -19,17 +20,25 @@ public class PasswordResetService {
 
     @Autowired
     private UserRepository userRepository;
+    
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     public String createPasswordResetToken(User user) {
         String token = UUID.randomUUID().toString();
-        PasswordResetToken resetToken = new PasswordResetToken();
+
+        PasswordResetToken resetToken = tokenRepository.findByUser(user)
+            .orElse(new PasswordResetToken()); // Nếu có rồi thì update, nếu chưa thì tạo mới
+
         resetToken.setToken(token);
         resetToken.setUser(user);
         resetToken.setExpiryDate(LocalDateTime.now().plusHours(1));
         resetToken.setUsed(false);
+
         tokenRepository.save(resetToken);
         return token;
     }
+
 
     public boolean validatePasswordResetToken(String token) {
         var optionalToken = tokenRepository.findByToken(token);
@@ -47,7 +56,8 @@ public class PasswordResetService {
         if (resetToken.isUsed() || resetToken.getExpiryDate().isBefore(LocalDateTime.now())) return false;
 
         User user = resetToken.getUser();
-        user.setPassword(newPassword); // Lưu ý: nên mã hóa mật khẩu ở đây
+        user.setPassword(passwordEncoder.encode(newPassword));
+//        user.setPassword(newPassword); // Lưu ý: nên mã hóa mật khẩu ở đây
         userRepository.save(user);
 
         resetToken.setUsed(true);

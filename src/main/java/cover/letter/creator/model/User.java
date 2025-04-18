@@ -31,7 +31,7 @@ public class User {
     @Column(nullable = false)
     private String password;
     
-    @Column(name = "avatar_url") // Thêm trường avatar_url
+    @Column(name = "avatar_url", length = 1000)
     private String avatarUrl;
 
     private Date birthday;
@@ -39,6 +39,11 @@ public class User {
     private String address;
 
     private String phone;
+    
+    private String school;
+    
+    //chuyên ngành
+    private String specialization;
 
     // Mối quan hệ One-to-Many với CoverLetterPdf
     @OneToMany(mappedBy = "user")

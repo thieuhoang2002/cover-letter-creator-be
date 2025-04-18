@@ -1,5 +1,6 @@
 package cover.letter.creator.service;
 
+import cover.letter.creator.dto.UserProfileUpdateRequest;
 import cover.letter.creator.model.Template;
 import cover.letter.creator.model.User;
 import cover.letter.creator.repository.UserRepository;
@@ -190,5 +191,34 @@ public class UserService {
         return true;
     }
 
+    @Transactional
+    public User updateUserProfile(String email, UserProfileUpdateRequest request) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (request.getName() != null) user.setName(request.getName());
+        if (request.getEmail() != null) user.setEmail(request.getEmail());
+        if (request.getAvatarUrl() != null) user.setAvatarUrl(request.getAvatarUrl());
+        if (request.getBirthday() != null) user.setBirthday(request.getBirthday());
+        if (request.getAddress() != null) user.setAddress(request.getAddress());
+        if (request.getPhone() != null) user.setPhone(request.getPhone());
+        if (request.getSchool() != null) user.setSchool(request.getSchool());
+        if (request.getSpecialization() != null) user.setSpecialization(request.getSpecialization());
+
+        return userRepository.save(user);
+    }
     
+    @Transactional
+    public void changePasswordWithoutOld(String email, String newPassword) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (passwordEncoder.matches(newPassword, user.getPassword())) {
+            throw new IllegalArgumentException("Mật khẩu mới không được trùng với mật khẩu hiện tại");
+        }
+
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+    }
+
 }

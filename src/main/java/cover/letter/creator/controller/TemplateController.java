@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -34,18 +35,40 @@ public class TemplateController {
 
     @PostMapping
     public Template createTemplate(@RequestBody Template template) {
+    	template.setUpdateDate(LocalDateTime.now()); // 👈 Cập nhật thời gian tạo
         return templateService.saveTemplate(template);
     }
 
+//    @PutMapping("/{id}")
+//    public ResponseEntity<Template> updateTemplate(@PathVariable Integer id, @RequestBody Template template) {
+//        Optional<Template> existingTemplate = templateService.getTemplateById(id);
+//        if (existingTemplate.isPresent()) {
+//            template.setId(id);
+//            template.setUpdateDate(LocalDateTime.now()); // 👈 Cập nhật thời gian chỉnh sửa
+//            return ResponseEntity.ok(templateService.saveTemplate(template));
+//        }
+//        return ResponseEntity.notFound().build();
+//    }
+    
     @PutMapping("/{id}")
     public ResponseEntity<Template> updateTemplate(@PathVariable Integer id, @RequestBody Template template) {
-        Optional<Template> existingTemplate = templateService.getTemplateById(id);
-        if (existingTemplate.isPresent()) {
-            template.setId(id);
-            return ResponseEntity.ok(templateService.saveTemplate(template));
+        Optional<Template> existingTemplateOpt = templateService.getTemplateById(id);
+        if (existingTemplateOpt.isEmpty()) {
+            return ResponseEntity.notFound().build();
         }
-        return ResponseEntity.notFound().build();
+
+        Template existingTemplate = existingTemplateOpt.get();
+
+        existingTemplate.setName(template.getName());
+        existingTemplate.setType(template.getType());
+        existingTemplate.setContent(template.getContent());
+        existingTemplate.setImage(template.getImage());
+        existingTemplate.setStatus(template.getStatus());
+        existingTemplate.setUpdateDate(LocalDateTime.now());
+
+        return ResponseEntity.ok(templateService.saveTemplate(existingTemplate));
     }
+
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteTemplate(@PathVariable Integer id) {

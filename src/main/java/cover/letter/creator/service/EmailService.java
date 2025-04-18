@@ -12,8 +12,11 @@ public class EmailService {
     private JavaMailSender mailSender;
 
     public void sendPasswordResetEmail(String toEmail, String resetToken) {
-        String resetUrl = "http://localhost:5173/reset-password?token=" + resetToken;
-
+        //String resetUrl = "http://localhost:5173/reset-password?token=" + resetToken;
+    	
+    	//deploy
+    	String resetUrl = "https://cover-letter-creator-fe.vercel.app/reset-password?token=" + resetToken;
+    	
         SimpleMailMessage message = new SimpleMailMessage();
         message.setTo(toEmail);
         message.setSubject("Yêu cầu đặt lại mật khẩu");

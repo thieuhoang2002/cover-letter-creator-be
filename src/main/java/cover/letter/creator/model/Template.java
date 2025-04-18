@@ -6,7 +6,10 @@ import lombok.Data;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import java.time.LocalDateTime;
+import org.hibernate.annotations.UpdateTimestamp;
 
 @Entity
 @Table(name = "templates")
@@ -29,6 +32,11 @@ public class Template {
 
     @Column(columnDefinition = "INT DEFAULT 0")
     private Integer views = 0;
+    
+    @Column(name = "update_date")
+//    @UpdateTimestamp
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private LocalDateTime updateDate;
 
     @Column(columnDefinition = "VARCHAR(50) DEFAULT 'active'")
     private String status = "active";
