@@ -2,6 +2,8 @@ package cover.letter.creator.controller;
 
 import cover.letter.creator.config.JwtUtil;
 import cover.letter.creator.dto.ChangePasswordRequest;
+import cover.letter.creator.dto.ChangePasswordWithoutOldRequest;
+import cover.letter.creator.dto.UserProfileUpdateRequest;
 import cover.letter.creator.model.Template;
 import cover.letter.creator.model.User;
 import cover.letter.creator.service.TemplateService;
@@ -169,6 +171,39 @@ public class UserController {
         }
     }
 
+    @PutMapping("/me")
+    public ResponseEntity<User> updateCurrentUserProfile(
+            @RequestHeader("Authorization") String token,
+            @RequestBody UserProfileUpdateRequest request) {
+        try {
+            String jwt = token.replace("Bearer ", "");
+            String email = jwtUtil.extractEmail(jwt);
 
+            User updatedUser = userService.updateUserProfile(email, request);
+            return ResponseEntity.ok(updatedUser);
+        } catch (Exception e) {
+            logger.error("Error updating profile: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    @PostMapping("/change-password-without-old")
+    public ResponseEntity<String> changePasswordWithoutOld(
+            @RequestHeader("Authorization") String token,
+            @RequestBody ChangePasswordWithoutOldRequest request) {
+        try {
+            String jwt = token.replace("Bearer ", "");
+            String email = jwtUtil.extractEmail(jwt);
+
+            userService.changePasswordWithoutOld(email, request.getNewPassword());
+
+            return ResponseEntity.ok("Đổi mật khẩu thành công!");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        } catch (Exception e) {
+            logger.error("Error changing password without old: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Lỗi khi đổi mật khẩu!");
+        }
+    }
 }
 
