@@ -1,0 +1,5 @@
+khi deploy thi chinh sua:
+
+EmailService.java
+
+application.properties
