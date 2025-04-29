@@ -53,6 +53,12 @@ public class UserService {
         }
         return userRepository.save(user);
     }
+    
+    //Hàm của Long
+    public User createUser(User user) {
+    	user.setPassword(passwordEncoder.encode(user.getPassword()));
+        return userRepository.save(user);
+    }
 
     public User updateUser(Integer id, User updatedUser) {
         Optional<User> existingUserOpt = userRepository.findById(id);

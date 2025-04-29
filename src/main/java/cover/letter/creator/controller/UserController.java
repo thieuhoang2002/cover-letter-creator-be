@@ -57,6 +57,11 @@ public class UserController {
         User registeredUser = userService.registerUser(user);
         return ResponseEntity.ok(registeredUser);
     }
+    
+    @PostMapping
+    public User createUser(@RequestBody User user) {
+        return userService.createUser(user);
+    }
 
     @PutMapping("/{id}")
     public ResponseEntity<User> updateUser(@PathVariable Integer id, @RequestBody User user) {
