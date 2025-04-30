@@ -1,6 +1,7 @@
 package cover.letter.creator.service;
 
 import cover.letter.creator.model.Template;
+import cover.letter.creator.model.TemplateModernCV;
 import cover.letter.creator.repository.TemplateRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

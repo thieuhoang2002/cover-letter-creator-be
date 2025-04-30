@@ -7,8 +7,11 @@ import cover.letter.creator.dto.UserProfileUpdateRequest;
 import cover.letter.creator.model.Template;
 import cover.letter.creator.model.User;
 import cover.letter.creator.service.TemplateService;
+import cover.letter.creator.service.TemplateModernCVService;
 import cover.letter.creator.service.UserService;
 import jakarta.transaction.Transactional;
+import cover.letter.creator.model.TemplateModernCV;
+
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -37,6 +40,9 @@ public class UserController {
     
     @Autowired
     private TemplateService templateService;
+    
+    @Autowired
+    private TemplateModernCVService templateModernCVService;
     
     @Autowired
     private JwtUtil jwtUtil;
@@ -82,19 +88,6 @@ public class UserController {
         return ResponseEntity.notFound().build();
     }
     
-//    @GetMapping("/me")
-//    public ResponseEntity<User> getCurrentUser(@RequestHeader("Authorization") String token) {
-//        try {
-//            String jwt = token.replace("Bearer ", "");
-//            String email = jwtUtil.extractEmail(jwt);
-//            Optional<User> user = userService.getUserByEmail(email);
-//            return user.map(ResponseEntity::ok)
-//                .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build());
-//        } catch (Exception e) {
-//            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-//        }
-//    }
-    
     @GetMapping("/me")
     public ResponseEntity<User> getCurrentUser(@RequestHeader("Authorization") String token) {
         try {
@@ -119,7 +112,6 @@ public class UserController {
         }
     }
 
-    
     
     @PostMapping("/me/love-template/{templateId}")
     public ResponseEntity<String> toggleFavoriteTemplate(
@@ -152,6 +144,39 @@ public class UserController {
                     .body("Error toggling favorite: " + e.getMessage());
         }
     }
+    
+    @PostMapping("/me/love-modern-template/{templateId}")
+    public ResponseEntity<String> toggleFavoriteModernTemplate(
+            @RequestHeader("Authorization") String token,
+            @PathVariable Integer templateId) {
+        try {
+            String jwt = token.replace("Bearer ", "");
+            String email = jwtUtil.extractEmail(jwt);
+            Optional<User> userOpt = userService.getUserByEmail(email);
+
+            if (!userOpt.isPresent()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+            }
+
+            User user = userOpt.get();
+            Optional<TemplateModernCV> templateOpt = templateModernCVService.getTemplateById(templateId);
+
+            if (!templateOpt.isPresent()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Modern template not found");
+            }
+
+            TemplateModernCV template = templateOpt.get();
+            userService.toggleFavoriteModernTemplate(user, template);
+
+            return ResponseEntity.ok("Modern favorite toggled successfully");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error toggling modern favorite: " + e.getMessage());
+        }
+    }
+
     
     @PostMapping("/change-password")
     public ResponseEntity<String> changePassword(
