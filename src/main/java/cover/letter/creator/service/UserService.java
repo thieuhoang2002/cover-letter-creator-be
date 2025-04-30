@@ -72,11 +72,17 @@ public class UserService {
         if (updatedUser.getName() != null) existingUser.setName(updatedUser.getName());
         if (updatedUser.getEmail() != null) existingUser.setEmail(updatedUser.getEmail());
         if (updatedUser.getPassword() != null && !updatedUser.getPassword().isEmpty()) {
-            existingUser.setPassword(passwordEncoder.encode(updatedUser.getPassword()));
+            existingUser.setPassword(passwordEncoder.encode(updatedUser.getPassword())); 
         }
+    
+        if (updatedUser.getAvatarUrl() != null) existingUser.setRole(updatedUser.getRole());
+        
+        if (updatedUser.getAvatarUrl() != null) existingUser.setAvatarUrl(updatedUser.getAvatarUrl());	
         if (updatedUser.getAddress() != null) existingUser.setAddress(updatedUser.getAddress());
         if (updatedUser.getPhone() != null) existingUser.setPhone(updatedUser.getPhone());
         if (updatedUser.getBirthday() != null) existingUser.setBirthday(updatedUser.getBirthday());
+        if (updatedUser.getSchool() != null) existingUser.setSchool(updatedUser.getSchool());
+        if (updatedUser.getSpecialization() != null) existingUser.setSpecialization(updatedUser.getSpecialization());
         return userRepository.save(existingUser);
     }
 
