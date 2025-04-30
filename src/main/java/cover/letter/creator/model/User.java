@@ -61,5 +61,15 @@ public class User {
 //    private Set<Template> lovedTemplates;
     private Set<Template> lovedTemplates = new HashSet<>();
     
+    
+    //Mo rong ra CV hien dai
+    @ManyToMany
+    @JoinTable(
+        name = "user_loved_modern_templates",
+        joinColumns = @JoinColumn(name = "user_id"),
+        inverseJoinColumns = @JoinColumn(name = "modern_template_id")
+    )
+    private Set<TemplateModernCV> lovedTemplatesModern = new HashSet<>();
+
 
 }

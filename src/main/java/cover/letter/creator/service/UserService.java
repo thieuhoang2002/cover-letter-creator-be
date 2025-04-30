@@ -17,6 +17,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import cover.letter.creator.model.TemplateModernCV;
+
 
 @Service
 public class UserService {
@@ -85,55 +87,6 @@ public class UserService {
     public User updateUser(User user) {
         return userRepository.save(user);
     }
-
-//    @Transactional
-//    public void toggleFavoriteTemplate(User user, Template template) {
-//        try {
-//            if (user == null) {
-//                logger.error("User is null");
-//                throw new IllegalArgumentException("User cannot be null");
-//            }
-//            if (template == null) {
-//                logger.error("Template is null");
-//                throw new IllegalArgumentException("Template cannot be null");
-//            }
-//
-//            // Kiểm tra xem template đã là yêu thích chưa
-//            boolean isFavorite = entityManager.createQuery(
-//                    "SELECT COUNT(*) > 0 FROM User u JOIN u.lovedTemplates t WHERE u.id = :userId AND t.id = :templateId",
-//                    Boolean.class)
-//                    .setParameter("userId", user.getId())
-//                    .setParameter("templateId", template.getId())
-//                    .getSingleResult();
-//
-//            if (isFavorite) {
-//                // Xóa khỏi bảng user_loved_templates
-//                entityManager.createNativeQuery(
-//                        "DELETE FROM user_loved_templates WHERE user_id = :userId AND template_id = :templateId")
-//                        .setParameter("userId", user.getId())
-//                        .setParameter("templateId", template.getId())
-//                        .executeUpdate();
-//                logger.info("Removed template {} from favorites for user {}", template.getId(), user.getEmail());
-//            } else {
-//                // Thêm vào bảng user_loved_templates
-//                entityManager.createNativeQuery(
-//                        "INSERT INTO user_loved_templates (user_id, template_id) VALUES (:userId, :templateId)")
-//                        .setParameter("userId", user.getId())
-//                        .setParameter("templateId", template.getId())
-//                        .executeUpdate();
-//                logger.info("Added template {} to favorites for user {}", template.getId(), user.getEmail());
-//            }
-//
-//            // Không cần gọi save vì chúng ta đã thao tác trực tiếp trên database
-//            logger.info("User {} favorite toggled successfully", user.getEmail());
-//        } catch (Exception e) {
-//            logger.error("Error toggling favorite template {} for user {}: {}", 
-//                    template != null ? template.getId() : "null", 
-//                    user != null ? user.getEmail() : "null", 
-//                    e.getMessage(), e);
-//            throw e;
-//        }
-//    }
     
     @Transactional
     public void toggleFavoriteTemplate(User user, Template template) {
@@ -168,6 +121,42 @@ public class UserService {
             logger.error("Error toggling favorite template {} for user {}: {}", 
                     template != null ? template.getId() : "null", 
                     user != null ? user.getEmail() : "null", 
+                    e.getMessage(), e);
+            throw e;
+        }
+    }
+    
+    //yeu thich mau hien dai
+    @Transactional
+    public void toggleFavoriteModernTemplate(User user, TemplateModernCV modernTemplate) {
+        try {
+            if (user == null || modernTemplate == null) {
+                logger.error("User or Modern Template is null");
+                throw new IllegalArgumentException("User and Modern Template cannot be null");
+            }
+
+            boolean isFavorite = entityManager.createQuery(
+                    "SELECT COUNT(t) > 0 FROM User u JOIN u.lovedTemplatesModern t WHERE u.id = :userId AND t.id = :templateId",
+                    Boolean.class)
+                    .setParameter("userId", user.getId())
+                    .setParameter("templateId", modernTemplate.getId())
+                    .getSingleResult();
+
+            if (isFavorite) {
+                user.getLovedTemplatesModern().remove(modernTemplate);
+                logger.info("Removed modern template {} from favorites for user {}", modernTemplate.getId(), user.getEmail());
+            } else {
+                user.getLovedTemplatesModern().add(modernTemplate);
+                logger.info("Added modern template {} to favorites for user {}", modernTemplate.getId(), user.getEmail());
+            }
+
+            userRepository.save(user);
+            logger.info("User {} favorite modern template toggled successfully", user.getEmail());
+
+        } catch (Exception e) {
+            logger.error("Error toggling modern template {} for user {}: {}",
+                    modernTemplate != null ? modernTemplate.getId() : "null",
+                    user != null ? user.getEmail() : "null",
                     e.getMessage(), e);
             throw e;
         }
