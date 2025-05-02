@@ -5,11 +5,10 @@ import lombok.Data;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 @Entity
 @Table(name = "users")
@@ -35,41 +34,73 @@ public class User {
     private String avatarUrl;
 
     private Date birthday;
-
     private String address;
-
     private String phone;
-    
-    private String school;
-    
-    //chuyên ngành
     private String specialization;
 
-    // Mối quan hệ One-to-Many với CoverLetterPdf
+    // Cover letters
     @OneToMany(mappedBy = "user")
+    @JsonIgnore
     private List<CoverLetterPdf> coverLetters;
 
-    // Mối quan hệ Many-to-Many với Template
-//    @ManyToMany()
+    // Loved templates
     @ManyToMany
     @JoinTable(
         name = "user_loved_templates",
         joinColumns = @JoinColumn(name = "user_id"),
         inverseJoinColumns = @JoinColumn(name = "template_id")
     )
-    //@JsonIgnore // Ngăn Jackson serialize lovedTemplates
-//    private Set<Template> lovedTemplates;
+    @JsonIgnore
     private Set<Template> lovedTemplates = new HashSet<>();
-    
-    
-    //Mo rong ra CV hien dai
+
+    // Loved modern templates
     @ManyToMany
     @JoinTable(
         name = "user_loved_modern_templates",
         joinColumns = @JoinColumn(name = "user_id"),
         inverseJoinColumns = @JoinColumn(name = "modern_template_id")
     )
+    @JsonIgnore
     private Set<TemplateModernCV> lovedTemplatesModern = new HashSet<>();
+
+    // Skills
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @JsonIgnore
+    private Set<Skill> skills = new HashSet<>();
+
+    // Experiences
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @JsonIgnore
+    private Set<Experience> experiences = new HashSet<>();
+
+    // Educations
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @JsonIgnore
+    private Set<Education> educations = new HashSet<>();
+
+    
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @JsonIgnore
+    private Set<Certificate> certificates = new HashSet<>();
+
+
+    // Hobbies
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @JsonIgnore
+    private Set<Hobby> hobbies = new HashSet<>();
+    
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        User user = (User) o;
+        return Objects.equals(id, user.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
 
 
 }
