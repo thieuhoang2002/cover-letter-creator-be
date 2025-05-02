@@ -3,6 +3,7 @@ package cover.letter.creator.controller;
 import cover.letter.creator.config.JwtUtil;
 import cover.letter.creator.dto.ChangePasswordRequest;
 import cover.letter.creator.dto.ChangePasswordWithoutOldRequest;
+import cover.letter.creator.dto.UserProfileDTO;
 import cover.letter.creator.dto.UserProfileUpdateRequest;
 import cover.letter.creator.model.Template;
 import cover.letter.creator.model.User;
@@ -52,10 +53,31 @@ public class UserController {
         return userService.getAllUsers();
     }
 
+//    @GetMapping("/{id}")
+//    public ResponseEntity<User> getUserById(@PathVariable Integer id) {
+//        Optional<User> user = userService.getUserById(id);
+//        return user.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+//    }
+    
     @GetMapping("/{id}")
-    public ResponseEntity<User> getUserById(@PathVariable Integer id) {
-        Optional<User> user = userService.getUserById(id);
-        return user.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+    public ResponseEntity<UserProfileDTO> getUserById(@PathVariable Integer id) {
+        // Giả sử userId được sử dụng để lấy email hoặc bạn cần một cách khác để lấy email
+        // Đây chỉ là ví dụ, bạn cần điều chỉnh logic lấy email dựa trên userId
+        User user = userService.getUserById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng với ID: " + id));
+        UserProfileDTO userProfileDTO = userService.getUserProfileWithDetails(user.getEmail());
+        return ResponseEntity.ok(userProfileDTO);
+    }
+    
+    
+    @GetMapping("/profile/{id}")
+    public ResponseEntity<UserProfileDTO> getUserProfile(@PathVariable Integer id) {
+        // Giả sử userId được sử dụng để lấy email hoặc bạn cần một cách khác để lấy email
+        // Đây chỉ là ví dụ, bạn cần điều chỉnh logic lấy email dựa trên userId
+        User user = userService.getUserById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng với ID: " + id));
+        UserProfileDTO userProfileDTO = userService.getUserProfileWithDetails(user.getEmail());
+        return ResponseEntity.ok(userProfileDTO);
     }
 
     @PostMapping("/register")
@@ -88,29 +110,45 @@ public class UserController {
         return ResponseEntity.notFound().build();
     }
     
+//    @GetMapping("/me")
+//    public ResponseEntity<User> getCurrentUser(@RequestHeader("Authorization") String token) {
+//        try {
+//            String jwt = token.replace("Bearer ", "");
+//            String email = jwtUtil.extractEmail(jwt);
+//            
+//            // Lấy User + Loved Templates
+//            Optional<User> user = userService.getUserByEmail(email);
+//
+//            if (user.isPresent()) {
+//                logger.info("User: {}", user.get().getEmail());
+//                logger.info("Loved Templates: {}", user.get().getLovedTemplates().size());
+//                user.get().getLovedTemplates().forEach(t -> logger.info("Template: {}", t.getName()));
+//
+//                return ResponseEntity.ok(user.get());
+//            } else {
+//                return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+//            }
+//        } catch (Exception e) {
+//            logger.error("Error getting current user: {}", e.getMessage());
+//            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+//        }
+//    }
+    
     @GetMapping("/me")
-    public ResponseEntity<User> getCurrentUser(@RequestHeader("Authorization") String token) {
+    public ResponseEntity<UserProfileDTO> getCurrentUserProfile(@RequestHeader("Authorization") String token) {
         try {
             String jwt = token.replace("Bearer ", "");
             String email = jwtUtil.extractEmail(jwt);
-            
-            // Lấy User + Loved Templates
-            Optional<User> user = userService.getUserByEmail(email);
 
-            if (user.isPresent()) {
-                logger.info("User: {}", user.get().getEmail());
-                logger.info("Loved Templates: {}", user.get().getLovedTemplates().size());
-                user.get().getLovedTemplates().forEach(t -> logger.info("Template: {}", t.getName()));
 
-                return ResponseEntity.ok(user.get());
-            } else {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-            }
+            UserProfileDTO userProfile = userService.getUserProfileWithDetails(email);
+            return ResponseEntity.ok(userProfile);
         } catch (Exception e) {
-            logger.error("Error getting current user: {}", e.getMessage());
+            logger.error("Error getting current user profile: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
     }
+
 
     
     @PostMapping("/me/love-template/{templateId}")

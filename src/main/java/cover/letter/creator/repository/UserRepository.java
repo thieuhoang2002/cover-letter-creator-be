@@ -22,4 +22,14 @@ public interface UserRepository extends JpaRepository<User, Integer> {
 
     @EntityGraph(attributePaths = "lovedTemplates")
     Optional<User> findById(Integer id);
+    
+    @Query("SELECT u FROM User u " +
+    	       "LEFT JOIN FETCH u.skills " +
+    	       "LEFT JOIN FETCH u.experiences " +
+    	       "LEFT JOIN FETCH u.educations " +
+    	       "LEFT JOIN FETCH u.certificates " +
+    	       "LEFT JOIN FETCH u.hobbies " +
+    	       "WHERE u.email = :email")
+    Optional<User> findByEmailWithDetails(@Param("email") String email);
+
 }

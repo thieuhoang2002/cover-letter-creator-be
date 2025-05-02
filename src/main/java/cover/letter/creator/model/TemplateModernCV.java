@@ -7,8 +7,10 @@ import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 @Entity
 @Table(name = "modern_cv_templates")
@@ -23,12 +25,12 @@ public class TemplateModernCV {
     private String name;
 
     @Column(nullable = false)
-    private String type; // Ví dụ: "modern", "minimalist", "creative"
+    private String type;
 
     @Column(columnDefinition = "TEXT", nullable = false)
-    private String content; // HTML hoặc JSON template nội dung
+    private String content;
 
-    private String image; // Đường dẫn ảnh demo
+    private String image;
 
     @Column(columnDefinition = "INT DEFAULT 0")
     private Integer views = 0;
@@ -40,12 +42,12 @@ public class TemplateModernCV {
     @Column(columnDefinition = "VARCHAR(50) DEFAULT 'active'")
     private String status = "active";
 
-    // Người dùng yêu thích mẫu này
+    // ManyToMany with User (usersWhoLoved)
     @ManyToMany(mappedBy = "lovedTemplatesModern")
     @JsonIgnore
     private Set<User> usersWhoLoved = new HashSet<>();
 
-    // Trường tạm để đánh dấu là mẫu yêu thích hay không (không lưu DB)
+    
     @Transient
     private boolean isFavorite;
 
@@ -69,4 +71,6 @@ public class TemplateModernCV {
     public int hashCode() {
         return getClass().hashCode();
     }
+    
+
 }
