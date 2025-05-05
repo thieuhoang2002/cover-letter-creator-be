@@ -1,39 +1,37 @@
 package cover.letter.creator.dto;
 
-import java.util.List;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.Getter;
+import lombok.Setter;
 
+import java.util.List;
+import java.util.Map;
+
+@Getter
+@Setter
 public class HtmlCvRequest {
-    private String action;
-    private String theme;
-    private List<String> placeholders;
-    private String layout;
-    private String font;
-    private String styles;
-    private String response_format;
+
+    @JsonProperty("userData")
+    private Map<String, Object> userData;
+
+    @JsonProperty("position")
     private String position;
 
-    // Getters and Setters
-    public String getAction() { return action; }
-    public void setAction(String action) { this.action = action; }
+    @JsonProperty("layout")
+    private String layout;
 
-    public String getTheme() { return theme; }
-    public void setTheme(String theme) { this.theme = theme; }
+    @JsonProperty("font")
+    private String font;
 
-    public List<String> getPlaceholders() { return placeholders; }
-    public void setPlaceholders(List<String> placeholders) { this.placeholders = placeholders; }
+    @JsonProperty("styles")
+    private String styles;
 
-    public String getLayout() { return layout; }
-    public void setLayout(String layout) { this.layout = layout; }
+    @JsonProperty("theme")
+    private String theme;
 
-    public String getFont() { return font; }
-    public void setFont(String font) { this.font = font; }
+    @JsonProperty("response_format")
+    private String responseFormat;
 
-    public String getStyles() { return styles; }
-    public void setStyles(String styles) { this.styles = styles; }
-
-    public String getResponse_format() { return response_format; }
-    public void setResponse_format(String response_format) { this.response_format = response_format; }
-
-    public String getPosition() { return position; }
-    public void setPosition(String position) { this.position = position; }
+    @JsonProperty("placeholders")
+    private List<String> placeholders;
 }
