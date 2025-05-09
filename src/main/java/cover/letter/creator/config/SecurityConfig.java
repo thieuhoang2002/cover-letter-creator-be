@@ -78,7 +78,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/users/**").authenticated() //api quản lý thông tin users
                 .requestMatchers("/api/drive/**").permitAll()
                 .requestMatchers("/api/auth/**").permitAll()
-                .requestMatchers("/api/ai/**").permitAll()
+                .requestMatchers("/api/ai/**").authenticated() 
                 .anyRequest().authenticated() // Các request khác yêu cầu xác thực
             )
             .exceptionHandling(exception -> exception
