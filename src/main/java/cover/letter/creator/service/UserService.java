@@ -364,7 +364,9 @@ public class UserService {
         System.out.println("Educations count: " + user.getEducations().size());
         System.out.println("Certificates count: " + user.getCertificates().size());
         System.out.println("Hobbies count: " + user.getHobbies().size());
-
+        System.out.println("Loved Templates count: " + user.getLovedTemplates().size());
+        System.out.println("Loved Modern Templates count: " + user.getLovedTemplatesModern().size());
+        
         System.out.print("TOI DAY ROI");
         
         // Chuyển đổi sang DTO
@@ -436,6 +438,46 @@ public class UserService {
             return hobbyDTO;
         }).collect(Collectors.toSet());
         dto.setHobbies(hobbyDTOs);
+        
+     // Sao chép và chuyển đổi Loved Templates
+        Set<Template> lovedTemplates = user.getLovedTemplates();
+        Set<TemplateDTO> lovedTemplateDTOs = (lovedTemplates != null && !lovedTemplates.isEmpty())
+            ? lovedTemplates.stream().map(template -> {
+                TemplateDTO templateDTO = new TemplateDTO();
+                templateDTO.setId(template.getId());
+                templateDTO.setName(template.getName());
+                templateDTO.setType(template.getType());
+                templateDTO.setContent(template.getContent());
+                templateDTO.setImage(template.getImage());
+                templateDTO.setViews(template.getViews());
+                templateDTO.setUpdateDate(template.getUpdateDate());
+                templateDTO.setStatus(template.getStatus());
+                templateDTO.setFavorite(template.isFavorite()); // Đảm bảo ánh xạ trạng thái yêu thích
+                return templateDTO;
+            }).collect(Collectors.toSet())
+            : new HashSet<>();
+
+        dto.setLovedTemplates(lovedTemplateDTOs);
+
+        // Sao chép và chuyển đổi Loved Modern Templates
+        Set<TemplateModernCV> lovedModernTemplates = user.getLovedTemplatesModern();
+        Set<TemplateModernCVDTO> lovedModernTemplateDTOs = (lovedModernTemplates != null && !lovedModernTemplates.isEmpty())
+            ? lovedModernTemplates.stream().map(modernTemplate -> {
+                TemplateModernCVDTO modernTemplateDTO = new TemplateModernCVDTO();
+                modernTemplateDTO.setId(modernTemplate.getId());
+                modernTemplateDTO.setName(modernTemplate.getName());
+                modernTemplateDTO.setType(modernTemplate.getType());
+                modernTemplateDTO.setContent(modernTemplate.getContent());
+                modernTemplateDTO.setImage(modernTemplate.getImage());
+                modernTemplateDTO.setViews(modernTemplate.getViews());
+                modernTemplateDTO.setUpdateDate(modernTemplate.getUpdateDate());
+                modernTemplateDTO.setStatus(modernTemplate.getStatus());
+                modernTemplateDTO.setFavorite(modernTemplate.isFavorite()); // Đảm bảo ánh xạ trạng thái yêu thích
+                return modernTemplateDTO;
+            }).collect(Collectors.toSet())
+            : new HashSet<>();
+
+        dto.setLovedModernTemplates(lovedModernTemplateDTOs);
 
         return dto;
     }

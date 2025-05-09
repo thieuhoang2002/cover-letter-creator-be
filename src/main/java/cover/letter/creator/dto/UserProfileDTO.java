@@ -20,4 +20,6 @@ public class UserProfileDTO {
     private Set<EducationDTO> educations;
     private Set<CertificateDTO> certificates;
     private Set<HobbyDTO> hobbies;
+    private Set<TemplateDTO> lovedTemplates;
+    private Set<TemplateModernCVDTO> lovedModernTemplates;
 }
