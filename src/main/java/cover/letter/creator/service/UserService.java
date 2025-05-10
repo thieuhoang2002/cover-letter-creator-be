@@ -357,17 +357,17 @@ public class UserService {
     	        .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng với email: " + email));
 
         // Debug
-        System.out.println("Email User: " + user.getEmail());
-        System.out.println("ID User: " + user.getId());
-        System.out.println("Skills count: " + user.getSkills().size());
-        System.out.println("Experiences count: " + user.getExperiences().size());
-        System.out.println("Educations count: " + user.getEducations().size());
-        System.out.println("Certificates count: " + user.getCertificates().size());
-        System.out.println("Hobbies count: " + user.getHobbies().size());
-        System.out.println("Loved Templates count: " + user.getLovedTemplates().size());
-        System.out.println("Loved Modern Templates count: " + user.getLovedTemplatesModern().size());
-        
-        System.out.print("TOI DAY ROI");
+//        System.out.println("Email User: " + user.getEmail());
+//        System.out.println("ID User: " + user.getId());
+//        System.out.println("Skills count: " + user.getSkills().size());
+//        System.out.println("Experiences count: " + user.getExperiences().size());
+//        System.out.println("Educations count: " + user.getEducations().size());
+//        System.out.println("Certificates count: " + user.getCertificates().size());
+//        System.out.println("Hobbies count: " + user.getHobbies().size());
+//        System.out.println("Loved Templates count: " + user.getLovedTemplates().size());
+//        System.out.println("Loved Modern Templates count: " + user.getLovedTemplatesModern().size());
+//        
+//        System.out.print("TOI DAY ROI");
         
         // Chuyển đổi sang DTO
         UserProfileDTO dto = new UserProfileDTO();
