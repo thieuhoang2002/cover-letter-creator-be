@@ -157,7 +157,7 @@ public class DeepSeekAIService {
             userDataJson = "{}";
         }
         
-        System.out.print(userDataJson);
+//        System.out.print(userDataJson);
 
         String exampleOutput = """
             Example output:
@@ -181,7 +181,7 @@ public class DeepSeekAIService {
         );
 
         logger.debug("Generated prompt: {}", prompt);
-        System.out.print(prompt);
+//        System.out.print(prompt);
         return prompt;
     }
 }
