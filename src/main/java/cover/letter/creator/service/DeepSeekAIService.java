@@ -167,7 +167,7 @@ public class DeepSeekAIService {
             """;
 
         String prompt = String.format("""
-            Hãy tạo một CV thật đẹp (dạng html, tất cả bọc trong thẻ <div>...</div>, yêu cầu nội dung chỉ chứa đựng trong phạm vi an toàn của 1 trang A4 PDF (đảm bảo lúc in ra PDF không bị 2 trang là được), css inline (không sử dụng space-between) và không cần giải thích gì thêm) theo yêu cầu và dữ liệu sau, bạn có thể bổ sung thêm cho CV phong phú, còn đây là dữ liệu bắt buộc:
+            Hãy tạo một CV thật đẹp (dạng html, tất cả bọc trong thẻ <div>...</div>, yêu cầu nội dung chỉ chứa đựng trong phạm vi an toàn của 1 trang A4 PDF (đảm bảo lúc in ra PDF không bị 2 trang là được), css inline (không sử dụng space-between, flex-wrap, column-gap, row-gap) và không cần giải thích gì thêm) theo yêu cầu và dữ liệu sau, bạn có thể bổ sung thêm cho CV phong phú, còn đây là dữ liệu bắt buộc:
 			- Vị trí ứng tuyển: %s
 			- Chủ đề màu sắc: %s
 			- Thông tin cá nhân:
