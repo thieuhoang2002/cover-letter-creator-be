@@ -1,45 +1,78 @@
 # TODO.md — Cover Letter Creator Backend
 
-## ✅ Các Hạng Mục Đã Hoàn Thành (Completed)
-
-### 1. AI Migration & Upgrade (Groq Cloud)
-- [x] Chuyển đổi từ mô hình cũ sang **Groq Cloud API** (`https://api.groq.com/openai/v1/chat/completions`).
-- [x] Xử lý sự cố Groq thông báo `mixtral-8x7b-32768` decommissioned: nâng cấp model chính sang **`openai/gpt-oss-120b`** và model dự phòng sang **`llama-3.3-70b-versatile`**.
-- [x] Bổ sung cơ chế tự động Fallback trong `GroqAIService.java` khi model chính gặp lỗi quota hoặc 400 Bad Request.
-- [x] Tinh chỉnh Prompt kỹ thuật định dạng HTML & CSS inline chuẩn A4, loại bỏ các thuộc tính Flexbox không tương thích với iText 4.0.3.
-
-### 2. PDF Engine & Cloudflare R2 Integration
-- [x] Loại bỏ hoàn toàn sự phụ thuộc vào Google Drive API và Service Account JSON file.
-- [x] Chuyển sang xuất PDF dạng **Binary Stream** (`application/pdf`) gửi kèm header `Content-Disposition` để trình duyệt tải trực tiếp.
-- [x] Tích hợp lưu trữ đám mây vĩnh viễn trên **Cloudflare R2** (S3-compatible bucket `cover-letter-cv-storage`), phân phối qua public CDN domain.
-- [x] **Deduplication Guard**: Bổ sung cơ chế chống trùng lặp tạo PDF trong vòng 10 giây tại `AICVPdfService.java`, ngăn ngừa tình trạng spam click tạo nhiều bản ghi cùng một file.
-
-### 3. Quản Lý Template & Cơ Sở Dữ Liệu
-- [x] Seed sẵn bộ 3 mẫu Cover Letter Classic (Kỹ sư phần mềm, Chuyên viên Marketing, Kế toán trưởng) vào bảng `templates`.
-- [x] Seed sẵn bộ 3 mẫu Modern CV (Công nghệ thông tin / Tech Minimalist, Chuyên gia Kinh doanh / Corporate Navy, Thiết kế sáng tạo / Creative Emerald) vào bảng `template_modern_cv`.
-- [x] Dọn dẹp sạch các bản ghi PDF trùng lặp trong cơ sở dữ liệu `ai_cv_pdf`.
-
-### 4. Xác Thực & Người Dùng
-- [x] `POST /api/users/login` — Đăng nhập email/password, trả JWT (HMAC-SHA512).
-- [x] `POST /api/users/profile/register` — Đăng ký tài khoản mới.
-- [x] `POST /api/users/google-login` — Đăng nhập bằng Google ID Token.
-- [x] OAuth2 Social Login với GitHub thông qua Spring Security.
-- [x] `GET /api/users/profile/me` & `PUT /api/users/profile/me` — Quản lý hồ sơ cá nhân đầy đủ (kỹ năng, kinh nghiệm, học vấn, chứng chỉ, sở thích).
-- [x] `POST /api/auth/forgot-password` & `POST /api/auth/reset-password` — Khôi phục mật khẩu qua Gmail SMTP.
+Theo dõi tiến độ phát triển, các tính năng đã hoàn thiện, tồn đọng kỹ thuật và danh sách nhiệm vụ cần thực hiện cho Backend Spring Boot.
 
 ---
 
-## 📋 Danh Mục Cần Cải Tiến & Tối Ưu Hóa (Backlog)
+## ✅ Các Hạng Mục Đã Hoàn Thành (Completed)
 
-### 🔴 Mức Độ Quan Trọng (High Priority)
-- [ ] **Bảo vệ Credentials:** Chuyển các secret key (`jwt.secret`, `api.key`, `cloudflare.r2.*`, `spring.mail.password`) từ file `application.properties` sang biến môi trường hệ thống (Environment Variables) hoặc Docker Secrets khi deploy Production.
-- [ ] **Xác thực Token Google Chặt Chẽ:** Tích hợp `GoogleIdTokenVerifier` chính thức để verify chữ ký số của Google thay vì chỉ giải mã base64.
+### 1. Hạ Tầng Đám Mây & Triển Khai Production (Cloud Deployment & DevOps)
+- [x] **Container hóa Docker Production-ready**:
+  - [x] Dockerfile multi-stage (Maven 3.9.9 + JDK 21 Alpine builder, Eclipse Temurin 21 JRE Alpine runner).
+  - [x] Tích hợp `fontconfig` và `ttf-dejavu` đảm bảo iText 4.0.3 render chính xác font chữ tiếng Việt khi xuất PDF.
+  - [x] Tối ưu hóa JVM cho gói Render Free 512MB RAM: `-XX:+UseContainerSupport -Xmx384m`.
+  - [x] Cấu hình Maven Mirror (`settings.xml` trỏ Google Cloud Maven Central) giải quyết triệt để lỗi rate-limiting `429 Too Many Requests`.
+- [x] **Triển khai Render Web Service**:
+  - [x] Deploy live backend tại: `https://cover-letter-creator-be-eadm.onrender.com`.
+  - [x] Thiết lập endpoint kiểm tra sức khỏe công khai: `GET /api/ai/health` phục vụ giám sát keep-alive định kỳ qua `cron-job.org`.
+- [x] **Di trú Cơ sở Dữ liệu Sang TiDB Cloud Serverless**:
+  - [x] Chuyển đổi thành công từ MySQL XAMPP cục bộ lên **TiDB Cloud Serverless** (AWS ap-southeast-1, MySQL 8.0 wire-compatible).
+  - [x] Bật bảo mật SSL/TLS bắt buộc `sslMode=VERIFY_IDENTITY`.
+  - [x] Tự động cập nhật bảng biểu JPA Hibernate (`spring.jpa.hibernate.ddl-auto=update`).
+- [x] **Bộ Dữ Liệu Mẫu Phong Phú (11 Templates)**:
+  - [x] **6 mẫu Cover Letter**: 3 mẫu Chuẩn Cơ Quan Nhà Nước (Hành chính, Giảng dạy, Kế toán) + 3 mẫu Hiện Đại (Kỹ sư Phần mềm, Marketing, Nhân sự).
+  - [x] **5 mẫu Modern CV**: 2 mẫu Chuẩn Cơ Quan Nhà Nước (Cán bộ Viên chức, Giáo dục) + 3 mẫu Hiện Đại (Công nghệ Thông tin, Kinh doanh, Thiết kế).
+  - [x] Bộ script SQL khởi tạo tự động `seed_templates.sql`.
 
-### 🟡 Mức Độ Trung Bình (Medium Priority)
-- [ ] **Chuẩn hóa DTO Dùng Chung:** Gộp các DTO `PdfRequest`, `ModernCVPdfRequest`, `AICVPdfRequest` thành một DTO duy nhất trong package `dto/`.
-- [ ] **Dọn Dẹp Class Nội Tuyến:** Di chuyển các DTO đang khai báo inline trong Controller ra file riêng.
-- [ ] **Rate Limiting:** Thêm bộ đếm tần suất gọi API (Bucket4j) cho endpoint `/api/ai/generate-cv` để tránh lạm dụng hạn ngạch Groq API.
+### 2. Bảo Mật, JWT & CORS Linh Hoạt
+- [x] **JWT Token HMAC-SHA512 Siêu Bền Vững (Resilient Signing Key)**:
+  - [x] Nâng cấp `JwtUtil.java` hỗ trợ đa định dạng Base64, Base64URL.
+  - [x] Tự động băm an toàn qua **SHA-512 digest** cho mọi chuỗi ký tự, triệt tiêu hoàn toàn lỗi `Illegal base64 character: '_'`.
+- [x] **CORS Toàn Diện (Cross-Origin Resource Sharing)**:
+  - [x] Cấu hình `setAllowedOriginPatterns("*")` cho phép linh hoạt mọi domain Vercel (`*.vercel.app`) và các port localhost (`5173`, `5174`, `3000`).
+  - [x] Hỗ trợ đầy đủ `AllowCredentials(true)` và expose các headers quan trọng (`Content-Disposition`, `Authorization`).
+- [x] **Tách Biệt Môi Trường & Bảo Vệ Khóa Bí Mật**:
+  - [x] File cấu hình mẫu an toàn `application.properties.example`.
+  - [x] Toàn bộ secrets (`SPRING_DATASOURCE_*`, `JWT_SECRET`, `API_KEY`, `CLOUDFLARE_R2_*`, `GITHUB_*`, `GOOGLE_*`) được nạp qua Environment Variables.
+  - [x] Vượt qua 100% kiểm tra bảo mật của GitHub Secret Scanning.
 
-### 🟢 Mức Độ Tiện Ích (Low Priority)
-- [ ] **Xuất Định Dạng Khác:** Nghiên cứu hỗ trợ xuất thêm file định dạng Word (.docx) hoặc chia sẻ link CV online có mật khẩu.
-- [ ] **Admin Analytics:** Mở rộng các API thống kê số lượt xem, số lần tải PDF theo biểu đồ ngày/tuần/tháng cho bảng điều khiển Admin.
+### 3. AI & Lưu Trữ Đám Mây (Groq Cloud & Cloudflare R2)
+- [x] **Tích hợp Groq Cloud API**:
+  - [x] Model chính: `openai/gpt-oss-120b` (tốc độ cao, suy luận sắc bén).
+  - [x] Model dự phòng (Fallback): `llama-3.3-70b-versatile` tự động kích hoạt khi có lỗi quota.
+  - [x] Prompt chuẩn hóa sinh HTML/CSS inline tương thích bộ render A4 của iText.
+- [x] **Xuất PDF Dạng Binary Stream**:
+  - [x] Loại bỏ hoàn toàn phụ thuộc vào Google Drive API.
+  - [x] Trả file trực tiếp qua luồng byte `application/pdf`.
+- [x] **Lưu Trữ Đám Mây Cloudflare R2**:
+  - [x] Bucket S3-compatible `cover-letter-cv-storage` kết nối qua AWS SDK S3.
+  - [x] Phân phối file tức thì qua CDN public URL.
+- [x] **Deduplication Guard**: Chống spam click tạo trùng lặp bản ghi PDF trong khung thời gian 10 giây.
+
+### 4. Chiến Lược Phân Nhánh Git (Branching Strategy)
+- [x] **Nhánh `main`**: Ổn định, khóa cố định phục vụ CI/CD tự động lên Vercel và Render.
+- [x] **Nhánh `dev`**: Nhánh phát triển tính năng mới, thử nghiệm lột xác sản phẩm trước khi merge vào `main`.
+
+---
+
+## 🚀 Danh Mục Phát Triển Tính Năng Mới Trên Nhánh `dev` (New Roadmap)
+
+### 🔴 Ưu Tiên Cao (Phase 1 — Nâng Cấp Nền Tảng & AI Đỉnh Cao)
+- [ ] **AI Streaming Response (Server-Sent Events / SSE)**:
+  - Xây dựng endpoint `GET /api/ai/stream-cv` sử dụng WebMvc `SseEmitter` để stream trực tiếp từng từ từ Groq API về Frontend, tạo hiệu ứng chữ gõ tức thì.
+- [ ] **AI ATS Resume Reviewer (Chấm Điểm CV Thông Minh)**:
+  - API `POST /api/ai/review-cv`: Nhận nội dung CV + Mô tả công việc (Job Description), phân tích độ tương thích (0 - 100%), liệt kê điểm mạnh, điểm yếu và từ khóa còn thiếu.
+- [ ] **AI Tone Rewriter**:
+  - API `POST /api/ai/rewrite-sentence`: Viết lại đoạn văn bản theo phong cách yêu cầu (Chuyên nghiệp, Tự tin, Ngắn gọn, Thuyết phục).
+
+### 🟡 Ưu Tiên Trung Bình (Phase 2 — Tiện Ích Người Dùng & Portfolio)
+- [ ] **API Chia Sẻ CV Công Khai (Public Shareable Link)**:
+  - Sinh slug / token duy nhất cho CV để người dùng có thể gửi link trực tiếp cho nhà tuyển dụng xem mà không cần đăng nhập.
+- [ ] **API Sao Chép Bản Ghi (Duplicate CV / Cover Letter)**:
+  - Cho phép người dùng nhân bản một CV đã tạo để tùy biến cho từng công ty khác nhau.
+- [ ] **Tự Động Lưu Nháp (Auto-save API)**:
+  - Endpoint lưu nhanh trạng thái đang soạn thảo của người dùng vào database theo cơ chế debounce.
+
+### 🟢 Ưu Tiên Nâng Cao (Phase 3 — Tối Ưu & Mở Rộng)
+- [ ] **Rate Limiting (Bucket4j)**: Giới hạn số lượt gọi AI theo IP / User để bảo vệ hạn ngạch API Groq.
+- [ ] **Thống kê nâng cao cho Admin**: Tổng số lượt xem, số lần xuất PDF theo biểu đồ thời gian thực.
