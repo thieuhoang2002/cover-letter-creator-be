@@ -4,7 +4,8 @@
 FROM maven:3.9.9-eclipse-temurin-21-alpine AS build
 WORKDIR /app
 
-# Copy cấu hình Maven
+# Copy cấu hình Maven & Mirror chống lỗi 429
+COPY settings.xml /root/.m2/settings.xml
 COPY pom.xml .
 
 # Tải dependencies trước để cache layer
