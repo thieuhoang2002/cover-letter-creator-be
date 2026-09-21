@@ -22,5 +22,7 @@ public class UserProfileDTO {
     private Set<HobbyDTO> hobbies;
     private Set<TemplateDTO> lovedTemplates;
     private Set<TemplateModernCVDTO> lovedModernTemplates;
+
+    @com.fasterxml.jackson.annotation.JsonProperty("hasPassword")
     private Boolean hasPassword;
 }

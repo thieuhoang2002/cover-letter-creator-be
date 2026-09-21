@@ -96,7 +96,7 @@ public class SecurityConfig {
 
                 // 5. User Self-Service Operations (Profile & Password Change & Favorites)
                 .requestMatchers("/api/users/profile/me/**").hasAnyRole("USER", "ADMIN")
-                .requestMatchers("/api/users/profile/change-password", "/api/users/profile/change-password-without-old").hasAnyRole("USER", "ADMIN")
+                .requestMatchers("/api/users/profile/change-password", "/api/users/profile/change-password-without-old", "/api/users/profile/has-password").hasAnyRole("USER", "ADMIN")
 
                 // 6. User Operations (PDF Export, AI, Follow CV)
                 .requestMatchers("/api/pdf/**", "/api/modern-cv/pdf/**", "/api/ai-cv/pdf/**").hasAnyRole("USER", "ADMIN")

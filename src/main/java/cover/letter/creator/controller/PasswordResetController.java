@@ -53,7 +53,7 @@ public class PasswordResetController {
 
     @PostMapping("/reset-password")
     public ResponseEntity<?> resetPassword(@RequestBody Map<String, String> body) {
-        String token = body.get("token");
+        String token = body.get("token") != null ? body.get("token").trim() : null;
         String newPassword = body.get("newPassword");
 
         if (token == null || token.isBlank() || newPassword == null || newPassword.isBlank()) {

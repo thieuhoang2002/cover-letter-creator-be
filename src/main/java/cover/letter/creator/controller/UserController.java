@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -146,6 +147,21 @@ public class UserController {
         } catch (Exception e) {
             logger.error("Error getting current user profile: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+    }
+
+    @GetMapping("/has-password")
+    public ResponseEntity<Map<String, Boolean>> checkHasPassword(@RequestHeader("Authorization") String token) {
+        try {
+            String jwt = token.replace("Bearer ", "");
+            String email = jwtUtil.extractEmail(jwt);
+            Optional<User> userOpt = userService.getUserByEmail(email);
+            boolean hasPassword = userOpt.isPresent()
+                    && userOpt.get().getPassword() != null
+                    && !userOpt.get().getPassword().trim().isEmpty();
+            return ResponseEntity.ok(Map.of("hasPassword", hasPassword));
+        } catch (Exception e) {
+            return ResponseEntity.ok(Map.of("hasPassword", false));
         }
     }
 
