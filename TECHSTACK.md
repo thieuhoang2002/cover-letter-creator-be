@@ -78,7 +78,7 @@
 | Service | Mục đích | Config key |
 |---|---|---|
 | **Groq Cloud API** | Generate HTML CV từ prompt (Model: `llama-3.3-70b-versatile`) | `api.key` trong `application.properties` |
-| **Google Drive API** | Lưu trữ PDF | Service Account JSON: `/resources/calendar-438415-5bdb470fb244.json` |
+| **PDF Stream Engine** | iText html2pdf 4.0.3 (Direct Download / S3 Cloudflare R2 Ready) | Native Stream / S3 compatible |
 | **Gmail SMTP** | Gửi email reset mật khẩu | `spring.mail.*` |
 | **MySQL** | Database chính | `spring.datasource.*` |
 | **GitHub OAuth2** | Social login | `spring.security.oauth2.client.registration.github.*` |
