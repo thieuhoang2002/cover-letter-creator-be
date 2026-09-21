@@ -10,8 +10,13 @@ COPY pom.xml .
 # Tải dependencies trước để cache layer
 RUN mvn dependency:go-offline -B || true
 
-# Copy mã nguồn và đóng gói JAR
+# Copy toàn bộ mã nguồn
 COPY src ./src
+
+# Tự động tạo application.properties từ application.properties.example nếu chưa có
+RUN cp src/main/resources/application.properties.example src/main/resources/application.properties
+
+# Đóng gói file JAR
 RUN mvn clean package -DskipTests
 
 # ==========================================
