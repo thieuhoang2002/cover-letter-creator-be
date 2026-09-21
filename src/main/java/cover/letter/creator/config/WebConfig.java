@@ -12,6 +12,7 @@ public class WebConfig implements WebMvcConfigurer {
                 .allowedOrigins("http://localhost:5173", "https://cover-letter-creator-fe.vercel.app") // Thay đổi nếu frontend chạy trên cổng khác
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                 .allowedHeaders("*")
+                .exposedHeaders("Content-Disposition", "Authorization")
                 .allowCredentials(true);
     }
 }
