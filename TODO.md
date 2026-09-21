@@ -80,3 +80,12 @@ Theo dõi chi tiết lộ trình phát triển, các tính năng đã hoàn thi�
   - [ ] `GET /api/admin/vip-requests`: Lấy danh sách toàn bộ yêu cầu nâng cấp gói (kèm bộ lọc trạng thái).
   - [ ] `PUT /api/admin/vip-requests/{id}/approve`: Duyệt yêu cầu, cập nhật trạng thái user thành VIP (nâng hạn ngạch upload).
   - [ ] `PUT /api/admin/vip-requests/{id}/reject`: Từ chối yêu cầu kèm ghi chú lý do.
+
+### ⏳ 2.5. Hàng Đợi Điều Phối Tác Vụ AI (AI Request Queue & Concurrency Limiting)
+- [ ] **Bộ Điều Phối Hàng Đợi Xử Lý AI (AI Concurrency Queue)**:
+  - [ ] Giới hạn số lượng tác vụ Groq AI chạy đồng thời (Concurrency Limit = 2-3 tác vụ song song) để tránh chạm trần TPM/RPM của Groq API khi người dùng đông.
+  - [ ] Sử dụng `PriorityBlockingQueue` hoặc `CompletableFuture` với Semaphore để quản lý hàng đợi các request tạo CV.
+  - [ ] Trả về vị trí hiện tại trong hàng đợi (`queue_position`) cho client polling hoặc push qua Server-Sent Events (SSE).
+- [ ] **Ưu Tiên Luồng Cho Tài Khoản VIP (Priority Scheduling)**:
+  - [ ] Gán độ ưu tiên cao cho tài khoản VIP / Admin: Yêu cầu của VIP được đẩy lên đầu hàng đợi để thực thi ngay lập tức.
+  - [ ] Tránh tình trạng starvation: Cơ chế timeout sau 45 giây nếu hàng đợi quá tải, trả về thông báo thân thiện kèm hoàn tác lượt tạo.
