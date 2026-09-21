@@ -21,12 +21,14 @@ public class GroqAIService {
     @Value("${api.key}")
     private String apiKey;
 
+    @Value("${groq.model:openai/gpt-oss-120b}")
+    private String PRIMARY_MODEL;
+
+    @Value("${groq.fallback-model:llama-3.3-70b-versatile}")
+    private String FALLBACK_MODEL;
+
     // Groq OpenAI-compatible Chat Completions endpoint
     private final String API_URL = "https://api.groq.com/openai/v1/chat/completions";
-    // Primary fast & capable model
-    private final String PRIMARY_MODEL = "llama-3.3-70b-versatile";
-    // Fallback model
-    private final String FALLBACK_MODEL = "mixtral-8x7b-32768";
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 

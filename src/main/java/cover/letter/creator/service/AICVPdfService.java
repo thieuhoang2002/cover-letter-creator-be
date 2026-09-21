@@ -31,6 +31,18 @@ public class AICVPdfService {
         User user = userRepository.findById(Integer.parseInt(userId))
                 .orElseThrow(() -> new IllegalArgumentException("User not found with ID: " + userId));
 
+        // Chống lưu trùng lặp nếu người dùng click liên tục trong vòng 10 giây
+        Date tenSecondsAgo = new Date(System.currentTimeMillis() - 10000);
+        boolean isDuplicate = aicvPdfRepository.findAll().stream()
+                .anyMatch(pdf -> pdf.getUser() != null
+                        && pdf.getUser().getId().equals(user.getId())
+                        && fileUrl.equals(pdf.getUrlGoogleDrive())
+                        && pdf.getCreatedAt() != null
+                        && pdf.getCreatedAt().after(tenSecondsAgo));
+        if (isDuplicate) {
+            return null;
+        }
+
         // Tạo đối tượng AICVPdf
         AICVPdf coverLetterPdf = new AICVPdf();
         coverLetterPdf.setUrlGoogleDrive(fileUrl);

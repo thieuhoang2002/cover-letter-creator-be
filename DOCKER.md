@@ -1,19 +1,19 @@
 # 🐳 Hướng dẫn Container hóa & Triển khai với Docker (DOCKER.md)
 
-Tài liệu này hướng dẫn chi tiết cách đóng gói và khởi chạy dự án **Cover Letter Creator Backend** bằng Docker và Docker Compose.
+Tài liệu này hướng dẫn chi tiết cách đóng gói và khởi chạy dự án **Cover Letter Creator Backend** (Spring Boot 3.4.3, Java 21, Groq AI, Cloudflare R2) bằng Docker và Docker Compose.
 
 ---
 
 ## 1. Yêu cầu hệ thống
 
-- Đã cài đặt **Docker Desktop** (hoặc Docker Engine trên Linux).
-- Đã cài đặt **Docker Compose** (thường đi kèm Docker Desktop).
+- Đã cài đặt **Docker Desktop** (trên Windows/macOS) hoặc **Docker Engine** (trên Linux).
+- Đã cài đặt **Docker Compose** v2 trở lên.
 
 ---
 
-## 2. Tạo Dockerfile cho Backend
+## 2. File Cấu Hình Dockerfile
 
-Tạo file có tên `Dockerfile` (không có đuôi mở rộng) tại thư mục gốc của dự án:
+Tạo file `Dockerfile` tại thư mục gốc backend:
 
 ```dockerfile
 # ==========================================
@@ -22,13 +22,13 @@ Tạo file có tên `Dockerfile` (không có đuôi mở rộng) tại thư mụ
 FROM maven:3.9.9-eclipse-temurin-21 AS build
 WORKDIR /app
 
-# Copy file cấu hình maven và pom.xml để tải cache dependencies trước
+# Copy pom.xml và tải dependencies cache
 COPY pom.xml .
 COPY .mvn .mvn
 COPY mvnw .
 RUN mvn dependency:go-offline -B
 
-# Copy toàn bộ mã nguồn vào và tiến hành đóng gói JAR
+# Copy toàn bộ mã nguồn và tiến hành compile/package
 COPY src ./src
 RUN mvn clean package -DskipTests
 
@@ -38,7 +38,7 @@ RUN mvn clean package -DskipTests
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 
-# Cài đặt font để iText có thể render font chữ tiếng Việt khi tạo PDF
+# Cài đặt fontconfig hỗ trợ iText render font tiếng Việt khi tạo PDF
 RUN apk add --no-cache fontconfig ttf-dejavu
 
 # Copy file JAR từ bước build
@@ -55,7 +55,7 @@ ENTRYPOINT ["java", "-jar", "app.jar"]
 
 ## 3. Khởi chạy trọn gói bằng Docker Compose (Backend + MySQL)
 
-Tạo file `docker-compose.yml` tại thư mục gốc để chạy đồng thời cả Database MySQL và Backend Spring Boot:
+Tạo file `docker-compose.yml` tại thư mục gốc backend:
 
 ```yaml
 version: '3.8'
@@ -78,20 +78,27 @@ services:
 
   # Service 2: Spring Boot Backend
   backend:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: cover-letter-backend
     restart: always
     depends_on:
       - mysql-db
-    ports:
-      - "8080:8080"
     environment:
-      # Cấu hình Spring Boot ghi đè bằng biến môi trường Docker
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-db:3306/cover_letter_creator_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-db:3306/cover_letter_creator_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: rootpassword123
       API_KEY: your_groq_api_key_here
-      JWT_SECRET: your_jwt_secret_key_here
+      GROQ_MODEL: openai/gpt-oss-120b
+      GROQ_FALLBACK_MODEL: llama-3.3-70b-versatile
+      CLOUDFLARE_R2_ACCOUNT_ID: your_cloudflare_account_id
+      CLOUDFLARE_R2_ACCESS_KEY: your_cloudflare_access_key
+      CLOUDFLARE_R2_SECRET_KEY: your_cloudflare_secret_key
+      CLOUDFLARE_R2_BUCKET_NAME: cover-letter-cv-storage
+      CLOUDFLARE_R2_PUBLIC_URL: https://pub-your-bucket-id.r2.dev
+    ports:
+      - "8080:8080"
     networks:
       - app-network
 
@@ -103,33 +110,14 @@ networks:
     driver: bridge
 ```
 
----
-
-## 4. Các lệnh điều khiển Docker
-
-### Khởi chạy toàn bộ hệ thống (chạy ngầm):
+### Các lệnh vận hành:
 ```bash
+# Khởi động dịch vụ trong nền
 docker compose up -d --build
-```
 
-### Xem log thời gian thực của backend:
-```bash
-docker logs -f cover-letter-backend
-```
+# Xem log thời gian thực của backend
+docker compose logs -f backend
 
-### Dừng toàn bộ hệ thống:
-```bash
+# Dừng và giải phóng tài nguyên
 docker compose down
 ```
-
-### Dừng và xóa toàn bộ dữ liệu database volume:
-```bash
-docker compose down -v
-```
-
----
-
-## 5. Truy cập ứng dụng sau khi chạy
-
-- **API Base URL:** `http://localhost:8080`
-- **Health Check:** `http://localhost:8080/api/ai/health`

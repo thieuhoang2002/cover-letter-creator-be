@@ -1,255 +1,135 @@
 # HANDOVER.md — Cover Letter Creator Backend
 
-## 1. Yêu cầu môi trường
+## 1. Yêu Cầu Môi Trường (Prerequisites)
 
-| Yêu cầu | Phiên bản |
-|---|---|
-| Java | **21** (JDK 21) |
-| Maven | Không cần cài riêng — dùng `mvnw` có sẵn |
-| MySQL | 8.0+ |
-| Kết nối internet | Để gọi DeepSeek API, Google Drive API, Gmail SMTP |
-
----
-
-## 2. Chuẩn bị trước khi chạy
-
-### 2.1. Database
-- Tạo database MySQL nếu chạy local:
-  ```sql
-  CREATE DATABASE cover_letter_creator_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-  ```
-- Cấu hình trong `src/main/resources/application.properties`:
-  ```properties
-  # Comment dòng deploy, bỏ comment dòng local:
-  spring.datasource.url=jdbc:mysql://localhost:3306/cover_letter_creator_db
-  spring.datasource.username=root
-  spring.datasource.password=123456
-  ```
-  > **Lưu ý:** `spring.jpa.hibernate.ddl-auto=update` — Hibernate sẽ tự tạo/cập nhật bảng khi khởi động.
-
-### 2.2. Google Drive Service Account
-- Đặt file JSON của Service Account vào:  
-  `src/main/resources/calendar-438415-5bdb470fb244.json`
-- File này phải có quyền truy cập Google Drive API.
-
-### 2.3. Font chữ cho PDF
-- Đặt 4 file font vào `src/main/resources/fonts/`:
-  - `Times_New_Roman.ttf`
-  - `Times_New_Roman_Bold.ttf`
-  - `Times_New_Roman_Italic.ttf`
-  - `Times_New_Roman_Bold_Italic.ttf`
+| Yêu cầu | Phiên bản | Ghi chú |
+|---|---|---|
+| **Java** | **21** (JDK 21 LTS) | Bắt buộc để tương thích Spring Boot 3.4.3 |
+| **Maven** | Không cần cài ngoài | Sử dụng trực tiếp wrapper `mvnw` hoặc `mvnw.cmd` |
+| **MySQL** | 8.0+ / MariaDB | Khuyến nghị dùng XAMPP MySQL trên port 3306 |
+| **Groq Cloud API Key** | Cung cấp bởi Groq | Đăng ký miễn phí tại https://console.groq.com/keys |
+| **Cloudflare R2** | S3-Compatible Storage | Cấu hình Account ID, Access Key, Secret Key, Bucket |
 
 ---
 
-## 3. Chạy ứng dụng
+## 2. Chuẩn Bị & Thiết Lập Cấu Hình
 
-### Cách 1: Maven Wrapper (khuyến nghị)
-```bash
-# Windows PowerShell:
-.\mvnw.cmd spring-boot:run
+### 2.1. Thiết lập Cơ sở Dữ liệu
+1. Khởi động MySQL trong **XAMPP Control Panel**.
+2. Tạo database mới trong phpMyAdmin (`http://localhost/phpmyadmin`):
+   ```sql
+   CREATE DATABASE cover_letter_creator_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+   ```
+3. Sau khi khởi động ứng dụng lần đầu (để Hibernate tự sinh bảng), tiến hành nạp các template mẫu:
+   ```powershell
+   C:\xampp\mysql\bin\mysql.exe -u root cover_letter_creator_db < ..\cover-letter-creator-fe\seed_templates.sql
+   ```
 
-# Windows CMD:
-mvnw.cmd spring-boot:run
+### 2.2. Cấu hình Tham Số (`src/main/resources/application.properties`)
+Đảm bảo các cấu hình sau đã có trong file:
+```properties
+# 1. Cổng máy chủ
+server.port=8080
+
+# 2. Kết nối Database
+spring.datasource.url=jdbc:mysql://localhost:3306/cover_letter_creator_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8
+spring.datasource.username=root
+spring.datasource.password=
+spring.jpa.hibernate.ddl-auto=update
+
+# 3. Groq Cloud AI Service
+api.key=your_groq_api_key_here
+groq.model=openai/gpt-oss-120b
+groq.fallback-model=llama-3.3-70b-versatile
+
+# 4. Cloudflare R2 Storage
+cloudflare.r2.account-id=your_cloudflare_account_id
+cloudflare.r2.access-key=your_cloudflare_access_key
+cloudflare.r2.secret-key=your_cloudflare_secret_key
+cloudflare.r2.bucket-name=cover-letter-cv-storage
+cloudflare.r2.public-url=https://pub-your-bucket-id.r2.dev
 ```
 
-### Cách 2: Build JAR rồi chạy
-```bash
-.\mvnw.cmd package -DskipTests
+---
+
+## 3. Khởi Chạy Ứng Dụng
+
+### Sử dụng Terminal (Maven Wrapper)
+```powershell
+# Chạy trực tiếp từ thư mục cover-letter-creator-be:
+.\mvnw.cmd spring-boot:run
+```
+
+### Build file JAR chạy độc lập
+```powershell
+.\mvnw.cmd clean package -DskipTests
 java -jar target/CoverLetterCreator-0.0.1-SNAPSHOT.jar
 ```
 
-### Cách 3: Chạy từ IDE
-- Mở `CoverLetterCreatorApplication.java`, nhấn Run.
-
 ---
 
-## 4. Port và URL mặc định
+## 4. Mẫu Lệnh Test API (cURL Commands)
 
-| Item | Giá trị |
-|---|---|
-| Port | **8080** |
-| Base URL | `http://localhost:8080` |
-| Context path | `/` (không có prefix) |
-
----
-
-## 5. Mẫu cURL test API
-
-### 5.1. Health Check AI
+### 4.1. Kiểm tra Sức Khỏe AI Service (Health Check)
 ```bash
 curl -X GET http://localhost:8080/api/ai/health
 ```
-**Expected:** `{"status":"healthy","service":"CV Generator API"}`
+*Kết quả kỳ vọng:*
+```json
+{"status":"UP","provider":"Groq Cloud API","models":["openai/gpt-oss-120b","llama-3.3-70b-versatile"]}
+```
 
----
-
-### 5.2. Đăng ký tài khoản
+### 4.2. Lấy Danh Sách Template Mẫu
 ```bash
-curl -X POST http://localhost:8080/api/users/profile/register \
-  -H "Content-Type: application/json" \
-  -d "{\"name\":\"Test User\",\"email\":\"test@example.com\",\"password\":\"123456\",\"role\":\"user\"}"
-```
-
----
-
-### 5.3. Đăng nhập (lấy JWT token)
-```bash
-curl -X POST http://localhost:8080/api/users/login \
-  -H "Content-Type: application/json" \
-  -d "{\"email\":\"test@example.com\",\"password\":\"123456\"}"
-```
-**Expected:** Một chuỗi JWT token. Lưu token này để dùng cho các request tiếp theo.
-
-```
-# Lưu token vào biến (PowerShell):
-$TOKEN = "eyJhbGci..."
-
-# Lưu token vào biến (Bash):
-TOKEN="eyJhbGci..."
-```
-
----
-
-### 5.4. Lấy profile người dùng hiện tại
-```bash
-# PowerShell:
-curl -X GET http://localhost:8080/api/users/profile/me `
-  -H "Authorization: Bearer $TOKEN"
-
-# Bash/CMD:
-curl -X GET http://localhost:8080/api/users/profile/me \
-  -H "Authorization: Bearer $TOKEN"
-```
-
----
-
-### 5.5. Cập nhật profile (kể cả skills, experiences, v.v.)
-```bash
-curl -X PUT http://localhost:8080/api/users/profile/me \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer $TOKEN" \
-  -d "{
-    \"name\": \"Nguyen Van A\",
-    \"phone\": \"0123456789\",
-    \"address\": \"Ha Noi\",
-    \"specialization\": \"Backend Developer\",
-    \"skills\": [{\"name\": \"Spring Boot\"}, {\"name\": \"MySQL\"}],
-    \"experiences\": [{\"company\": \"ABC Corp\", \"role\": \"Dev\", \"time\": \"2022-2024\", \"description\": \"Developed REST APIs\"}],
-    \"educations\": [{\"school\": \"HUST\", \"degree\": \"Bachelor\", \"fieldOfStudy\": \"IT\", \"time\": \"2018-2022\"}],
-    \"certificates\": [],
-    \"hobbies\": [{\"name\": \"Coding\"}]
-  }"
-```
-
----
-
-### 5.6. Lấy danh sách template đang active
-```bash
+# Template Classic Cover Letter
 curl -X GET http://localhost:8080/api/templates/all
+
+# Template Modern CV
+curl -X GET http://localhost:8080/api/templates-modern/all
 ```
 
----
-
-### 5.7. Sinh CV bằng AI (DeepSeek)
+### 4.3. Gọi AI Sinh CV (HTML Format)
 ```bash
 curl -X POST http://localhost:8080/api/ai/generate-cv \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer $TOKEN" \
-  -d "{
-    \"position\": \"Backend Developer\",
-    \"theme\": \"blue\",
-    \"userData\": {
-      \"name\": \"Nguyen Van A\",
-      \"email\": \"test@example.com\",
-      \"skills\": [{\"name\": \"Spring Boot\"}],
-      \"experiences\": [],
-      \"educations\": [],
-      \"certificates\": [],
-      \"hobbies\": []
+  -d '{
+    "position": "Frontend Developer",
+    "theme": "blue",
+    "userData": {
+      "name": "Nguyễn Văn A",
+      "email": "vana@example.com",
+      "phone": "0987654321",
+      "address": "Hà Nội",
+      "specialization": "React & TypeScript",
+      "skills": [{"name": "React"}, {"name": "JavaScript"}, {"name": "TailwindCSS"}]
     }
-  }"
+  }'
 ```
-**Expected:** `{"status":"success","content":"<div>...HTML CV...</div>"}`
 
----
-
-### 5.8. Xuất PDF và upload Google Drive
+### 4.4. Xuất File PDF và Tải Trực Tiếp
 ```bash
 curl -X POST http://localhost:8080/api/ai-cv/pdf/generate \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer $TOKEN" \
-  -d "{
-    \"htmlContent\": \"<div style='font-family:Arial'><h1>CV Test</h1></div>\",
-    \"id\": \"1\",
-    \"email\": \"test@example.com\",
-    \"templateName\": \"AI Template\",
-    \"date\": \"21/09/2026\"
-  }"
+  -d '{
+    "htmlContent": "<div style=\"font-family: Times New Roman;\"><h1>Curriculum Vitae</h1><p>Họ tên: Nguyễn Văn A</p></div>",
+    "id": 1,
+    "email": "vana@example.com",
+    "templateName": "AI-Generated CV for Frontend",
+    "date": "21/09/2026"
+  }' \
+  --output test-download.pdf
 ```
-**Expected:** `"File upload thành công lên Google Drive. File ID: <driveId>"`
+*(File `test-download.pdf` sẽ được ghi thẳng xuống thư mục hiện hành và bản ghi sẽ được lưu trên Cloudflare R2).*
 
 ---
 
-### 5.9. Lấy danh sách AI CV PDF của user
-```bash
-curl -X GET http://localhost:8080/api/ai-cv/pdf/list/1 \
-  -H "Authorization: Bearer $TOKEN"
-```
+## 5. Các Vấn Đề Thường Gặp & Cách Khắc Phục (Troubleshooting)
 
----
-
-### 5.10. Quên mật khẩu
-```bash
-curl -X POST http://localhost:8080/api/auth/forgot-password \
-  -H "Content-Type: application/json" \
-  -d "{\"email\":\"test@example.com\"}"
-```
-
----
-
-### 5.11. Đăng nhập bằng Google (Frontend gửi Google ID Token)
-```bash
-curl -X POST http://localhost:8080/api/users/google-login \
-  -H "Content-Type: application/json" \
-  -d "{\"token\":\"<Google_ID_Token_từ_Frontend>\"}"
-```
-
----
-
-## 6. Postman Collection
-
-Import file dưới đây vào Postman (tạo thủ công hoặc yêu cầu cấp thêm):
-1. Tạo Environment với variable: `base_url = http://localhost:8080`, `token = <JWT>`
-2. Trong Authorization tab chọn **Bearer Token**, điền `{{token}}`
-3. Tất cả endpoint bảo mật cần header: `Authorization: Bearer {{token}}`
-
----
-
-## 7. CORS đã cho phép
-
-| Origin |
-|---|
-| `http://localhost:5173` (Vite dev server) |
-| `https://cover-letter-creator-fe.vercel.app` (Production FE) |
-
----
-
-## 8. Deploy (Railway)
-
-Thông tin trong `note_deploy.txt` và `application.properties`:
-- Deploy host: `shinkansen.proxy.rlwy.net:36673`
-- Database: Railway MySQL
-- Khi deploy production, đảm bảo bỏ comment đúng dòng `spring.datasource.*`
-
----
-
-## 9. Troubleshooting thường gặp
-
-| Lỗi | Nguyên nhân | Cách sửa |
-|---|---|---|
-| `Service account key file not found` | Thiếu file JSON Google Drive | Đặt file vào `src/main/resources/` đúng tên |
-| `Font không tìm thấy` (PDF bị lỗi font) | Thiếu file `.ttf` trong `resources/fonts/` | Đặt đủ 4 file font |
-| `401 Unauthorized` từ API | JWT hết hạn (10h) hoặc sai secret | Đăng nhập lại để lấy token mới |
-| `Error generating or uploading PDF: ...` | Google Drive API lỗi hoặc hết quota | Kiểm tra Service Account permissions |
-| `api.key` related error | DeepSeek API key sai/hết credit | Cập nhật `api.key` trong `application.properties` |
-| MySQL connection refused | DB chưa chạy hoặc sai host/port | Kiểm tra `spring.datasource.*` |
+1. **Lỗi `400 Bad Request: model_decommissioned`:**
+   - Nguyên nhân: Groq đã tắt các model cũ như `mixtral-8x7b-32768`.
+   - Khắc phục: Kiểm tra `application.properties`, đảm bảo `groq.model=openai/gpt-oss-120b`.
+2. **Lỗi `Unknown column 'title' in 'field list'` khi thao tác bảng `ai_cv_pdf`:**
+   - Bảng `ai_cv_pdf` lưu các trường: `id`, `user_id`, `url_google_drive` (chứa R2 URL), `created_at`.
+   - Nếu cần truy vấn, dùng: `SELECT id, user_id, url_google_drive, created_at FROM ai_cv_pdf;`.
+3. **Lỗi Font chữ tiếng Việt khi xuất PDF trên Linux/Docker:**
+   - Đảm bảo cài gói `fontconfig` và `ttf-dejavu` trong Dockerfile, đồng thời thư mục `src/main/resources/fonts/` có đủ 4 file font Times New Roman.
