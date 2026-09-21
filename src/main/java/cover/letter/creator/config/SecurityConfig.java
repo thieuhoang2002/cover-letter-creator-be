@@ -69,10 +69,8 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/users/profile/register", "/api/users/login", "/api/users/github-login").permitAll() //api quản lý login
                 .requestMatchers("/api/users/google-login").permitAll() //api login gg
-                .requestMatchers("/api/templates/all").permitAll() //api xem danh sách template
-                .requestMatchers("/api/templates/**").authenticated() //api quản lý template
-                .requestMatchers("/api/templates-modern/all").permitAll() 
-                .requestMatchers("/api/templates-modern/**").authenticated() 
+                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/templates/**", "/api/templates-modern/**").permitAll() // Xem danh sách & chi tiết template không cần đăng nhập
+                .requestMatchers("/api/templates/**", "/api/templates-modern/**").authenticated() // Thêm/sửa/xóa template yêu cầu đăng nhập 
                 .requestMatchers("/api/pdf/**").authenticated() //api xuất pdf
                 .requestMatchers("/api/modern-cv/pdf/**").authenticated() //api xuất pdf
                 .requestMatchers("/api/ai-cv/pdf/**").authenticated() //api xuất pdf
