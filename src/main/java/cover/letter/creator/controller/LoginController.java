@@ -33,9 +33,9 @@ public class LoginController {
         );
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        // Lấy UserDetails để truy xuất role
+        // Lấy UserDetails để truy xuất role (chuẩn hóa về chữ thường cho JWT claim)
         UserDetails userDetails = userDetailsService.loadUserByUsername(loginRequest.getEmail());
-        String role = userDetails.getAuthorities().iterator().next().getAuthority().replace("ROLE_", "");
+        String role = userDetails.getAuthorities().iterator().next().getAuthority().replace("ROLE_", "").toLowerCase();
 
         // Tạo token với email và role
         String token = jwtUtil.generateToken(loginRequest.getEmail(), role);
