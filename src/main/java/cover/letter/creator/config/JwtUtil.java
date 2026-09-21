@@ -25,8 +25,30 @@ public class JwtUtil {
     private final long EXPIRATION_TIME = 1000 * 60 * 60 * 10; // 10 giờ
 
     private SecretKey getSigningKey() {
-        byte[] keyBytes = Decoders.BASE64.decode(SECRET_KEY);
-        return Keys.hmacShaKeyFor(keyBytes);
+        if (SECRET_KEY == null || SECRET_KEY.isBlank()) {
+            SECRET_KEY = "CoverLetterCreatorDefaultSecretKeyMustBeVeryLongToMeetSha512RequirementsForSecurityPurposes";
+        }
+        try {
+            byte[] keyBytes = Decoders.BASE64.decode(SECRET_KEY);
+            if (keyBytes.length >= 64) {
+                return Keys.hmacShaKeyFor(keyBytes);
+            }
+        } catch (Exception ignored) {
+        }
+        try {
+            byte[] keyBytes = Decoders.BASE64URL.decode(SECRET_KEY);
+            if (keyBytes.length >= 64) {
+                return Keys.hmacShaKeyFor(keyBytes);
+            }
+        } catch (Exception ignored) {
+        }
+        try {
+            java.security.MessageDigest md = java.security.MessageDigest.getInstance("SHA-512");
+            byte[] hashedKey = md.digest(SECRET_KEY.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            return Keys.hmacShaKeyFor(hashedKey);
+        } catch (Exception e) {
+            throw new RuntimeException("Không thể tạo khóa bí mật cho JWT: " + e.getMessage(), e);
+        }
     }
 
     // Tạo token

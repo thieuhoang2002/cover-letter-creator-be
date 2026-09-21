@@ -23,7 +23,7 @@ spring.jpa.properties.hibernate.enable_lazy_load_no_trans=true
 # ===================================================================
 # 4. SECURITY & JWT CONFIGURATION (HMAC-SHA512)
 # ===================================================================
-jwt.secret=${JWT_SECRET:your_default_jwt_secret_must_be_overridden_in_production_environment_variables}
+jwt.secret=${JWT_SECRET:yhQQqcan1CKUWsPH9JCfcwTNW9kct74CPmYTR0LLQqyJU/Pv7lmv6bJ7+D5EmnNRN1b9YezAzYSggeU43EtrpQ==}
 
 # ===================================================================
 # 5. OAUTH2 SOCIAL LOGIN CONFIGURATION
