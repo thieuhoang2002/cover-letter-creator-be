@@ -77,7 +77,7 @@
 
 | Service | Mục đích | Config key |
 |---|---|---|
-| **DeepSeek AI API** | Generate HTML CV từ prompt | `api.key` trong `application.properties` |
+| **Groq Cloud API** | Generate HTML CV từ prompt (Model: `llama-3.3-70b-versatile`) | `api.key` trong `application.properties` |
 | **Google Drive API** | Lưu trữ PDF | Service Account JSON: `/resources/calendar-438415-5bdb470fb244.json` |
 | **Gmail SMTP** | Gửi email reset mật khẩu | `spring.mail.*` |
 | **MySQL** | Database chính | `spring.datasource.*` |
@@ -104,15 +104,11 @@ cover.letter.creator
 ├── dto/             # Data Transfer Objects (request/response)
 ├── model/           # JPA Entities
 ├── repository/      # Spring Data JPA Repositories
-└── service/         # Business Logic (13 services)
+└── service/         # Business Logic (13 services, bao gồm GroqAIService)
 ```
 
 ---
 
-## Cảnh báo hiện tại (Warnings — không phải lỗi build)
+## Trạng thái biên dịch
 
-| File | Cảnh báo | Nguyên nhân | Cách sửa |
-|---|---|---|---|
-| `DeepSeekAIService.java` | `uses unchecked or unsafe operations` | Dùng raw type `Map` trong `ResponseEntity<Map>` thay vì `ResponseEntity<Map<String,Object>>` | Thay `ResponseEntity<Map>` → `ResponseEntity<Map<String,Object>>`, thêm `@SuppressWarnings("unchecked")` hoặc dùng generic đầy đủ |
-
-> ✅ **BUILD SUCCESS** — `mvnw compile` exit code 0, 65 source files compiled thành công.
+> ✅ **BUILD SUCCESS** — `mvnw compile` exit code 0, 65 source files compiled thành công 100%, 0 warning.

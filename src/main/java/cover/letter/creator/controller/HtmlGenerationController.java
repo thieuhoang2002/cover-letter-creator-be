@@ -1,7 +1,7 @@
 package cover.letter.creator.controller;
 
 import cover.letter.creator.dto.HtmlCvRequest;
-import cover.letter.creator.service.DeepSeekAIService;
+import cover.letter.creator.service.GroqAIService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -12,17 +12,17 @@ import java.util.Map;
 @RequestMapping("/api/ai")
 public class HtmlGenerationController {
 
-    private final DeepSeekAIService deepSeekAIService;
+    private final GroqAIService groqAIService;
 
     @Autowired
-    public HtmlGenerationController(DeepSeekAIService deepSeekAIService) {
-        this.deepSeekAIService = deepSeekAIService;
+    public HtmlGenerationController(GroqAIService groqAIService) {
+        this.groqAIService = groqAIService;
     }
 
     @PostMapping("/generate-cv")
     public ResponseEntity<Map<String, String>> generateHtmlCV(@RequestBody HtmlCvRequest request) {
         try {
-            String htmlContent = deepSeekAIService.generateHtmlFromRequest(request);
+            String htmlContent = groqAIService.generateHtmlFromRequest(request);
             return ResponseEntity.ok(Map.of(
                 "status", "success",
                 "content", htmlContent

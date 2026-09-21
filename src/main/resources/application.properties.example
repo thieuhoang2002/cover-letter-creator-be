@@ -38,6 +38,6 @@ spring.mail.username=your_email@gmail.com
 spring.mail.password=your_gmail_app_password
 spring.mail.properties.mail.smtp.auth=true
 spring.mail.properties.mail.smtp.starttls.enable=true
-
-# AI Key (DeepSeek API Key)
-api.key=your_deepseek_api_key
+# AI Key (Groq Cloud API Key: gsk_...)
+# Get free key at: https://console.groq.com/keys
+api.key=your_groq_api_key
