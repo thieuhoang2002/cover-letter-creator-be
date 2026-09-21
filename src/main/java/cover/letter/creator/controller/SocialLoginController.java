@@ -55,7 +55,6 @@ public class SocialLoginController {
 
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
             String responseBody = response.body();
-            System.out.println("Access Token Response: " + responseBody); // Log phản hồi
 
             JsonNode tokenNode = objectMapper.readTree(responseBody);
             if (tokenNode.has("error")) {

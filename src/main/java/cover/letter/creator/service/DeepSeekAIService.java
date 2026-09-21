@@ -24,7 +24,6 @@ public class DeepSeekAIService {
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     public String generateHtmlFromRequest(HtmlCvRequest req) {
-        logger.info("Loaded API Key: {}", apiKey);
         if (apiKey == null || apiKey.trim().isEmpty()) {
             logger.error("API Key is missing or empty");
             throw new RuntimeException("API Key is not configured properly");
