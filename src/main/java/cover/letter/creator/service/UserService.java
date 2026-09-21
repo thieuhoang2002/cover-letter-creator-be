@@ -167,6 +167,10 @@ public class UserService {
             throw new RuntimeException("User not found");
         }
 
+        if (newPassword == null || newPassword.length() < 8) {
+            throw new IllegalArgumentException("Mật khẩu mới phải có tối thiểu 8 ký tự");
+        }
+
         User user = userOpt.get();
         if (!passwordEncoder.matches(oldPassword, user.getPassword())) {
             return false;

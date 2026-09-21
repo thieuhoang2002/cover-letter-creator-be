@@ -35,6 +35,9 @@ public class SecurityConfig {
     @Autowired
     private CustomUserDetailsService userDetailsService;
     
+    @Autowired
+    private RateLimitingFilter rateLimitingFilter;
+
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
@@ -49,10 +52,16 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOriginPatterns(List.of("*"));
+        configuration.setAllowedOriginPatterns(List.of(
+            "http://localhost:5173",
+            "http://localhost:3000",
+            "http://localhost:8080",
+            "https://*.vercel.app",
+            "https://cover-letter-creator-fe.vercel.app"
+        ));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
-        configuration.setExposedHeaders(List.of("Content-Disposition", "Authorization"));
+        configuration.setExposedHeaders(List.of("Content-Disposition", "Authorization", "Retry-After"));
         configuration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
@@ -67,37 +76,52 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/users/profile/register", "/api/users/login", "/api/users/github-login").permitAll() //api quản lý login
-                .requestMatchers("/api/users/google-login").permitAll() //api login gg
-                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/templates/**", "/api/templates-modern/**").permitAll() // Xem danh sách & chi tiết template không cần đăng nhập
-                .requestMatchers("/api/templates/**", "/api/templates-modern/**").authenticated() // Thêm/sửa/xóa template yêu cầu đăng nhập 
-                .requestMatchers("/api/pdf/**").authenticated() //api xuất pdf
-                .requestMatchers("/api/modern-cv/pdf/**").authenticated() //api xuất pdf
-                .requestMatchers("/api/ai-cv/pdf/**").authenticated() //api xuất pdf
-                .requestMatchers("/api/users/**").authenticated() //api quản lý thông tin users
+                // 1. Public Authentication & Health endpoints
+                .requestMatchers("/api/users/profile/register", "/api/users/login", "/api/users/github-login", "/api/users/google-login").permitAll()
                 .requestMatchers("/api/auth/**").permitAll()
-                .requestMatchers("/api/ai/health").permitAll() // public health check endpoint
-                .requestMatchers("/api/ai/**").authenticated()
-                .requestMatchers("/api/follow-cv/**").authenticated()
-                .anyRequest().authenticated() // Các request khác yêu cầu xác thực
+                .requestMatchers("/api/ai/health").permitAll()
+
+                // 2. Public Read-only Templates (Anyone can view lists & previews)
+                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/templates/**", "/api/templates-modern/**").permitAll()
+
+                // 3. Admin ONLY Operations on Templates (Create / Edit / Delete)
+                .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/templates/**", "/api/templates-modern/**").hasRole("ADMIN")
+                .requestMatchers(org.springframework.http.HttpMethod.PUT, "/api/templates/**", "/api/templates-modern/**").hasRole("ADMIN")
+                .requestMatchers(org.springframework.http.HttpMethod.DELETE, "/api/templates/**", "/api/templates-modern/**").hasRole("ADMIN")
+
+                // 4. Admin ONLY User Management
+                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/users/profile").hasRole("ADMIN")
+                .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/users/profile").hasRole("ADMIN")
+                .requestMatchers(org.springframework.http.HttpMethod.DELETE, "/api/users/profile/**").hasRole("ADMIN")
+
+                // 5. User Self-Service Operations (Profile & Password Change & Favorites)
+                .requestMatchers("/api/users/profile/me/**").hasAnyRole("USER", "ADMIN")
+                .requestMatchers("/api/users/profile/change-password", "/api/users/profile/change-password-without-old").hasAnyRole("USER", "ADMIN")
+
+                // 6. User Operations (PDF Export, AI, Follow CV)
+                .requestMatchers("/api/pdf/**", "/api/modern-cv/pdf/**", "/api/ai-cv/pdf/**").hasAnyRole("USER", "ADMIN")
+                .requestMatchers("/api/ai/**").hasAnyRole("USER", "ADMIN")
+                .requestMatchers("/api/follow-cv/**").hasAnyRole("USER", "ADMIN")
+
+                // 7. Any other request requires authentication
+                .anyRequest().authenticated()
             )
             .exceptionHandling(exception -> exception
-                    .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)) // Trả về 401 Unauthorized
+                    .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))
                 )
             .oauth2Login(oauth2 -> oauth2
-                    .userInfoEndpoint(userInfo -> userInfo.oidcUserService(oidcUserService())) // Cấu hình lấy thông tin người dùng
+                    .userInfoEndpoint(userInfo -> userInfo.oidcUserService(oidcUserService()))
                     .successHandler((request, response, authentication) -> {
                         DefaultOidcUser oidcUser = (DefaultOidcUser) authentication.getPrincipal();
                         String email = oidcUser.getAttribute("email") != null ? oidcUser.getAttribute("email") : oidcUser.getAttribute("login") + "@github.com";
-                        String role = "user"; // Gán mặc định, có thể lấy từ DB
+                        String role = "user";
                         String token = jwtUtil.generateToken(email, role);
-                        //response.sendRedirect("http://localhost:5137/auth-callback?token=" + token); // Chuyển hướng về frontend
                         response.sendRedirect("https://cover-letter-creator-fe.vercel.app/auth-callback?token=" + token);
-
                     })
                 )
+            .addFilterBefore(rateLimitingFilter, UsernamePasswordAuthenticationFilter.class)
             .addFilterBefore(new JwtAuthenticationFilter(jwtUtil, userDetailsService), UsernamePasswordAuthenticationFilter.class)
-            .formLogin(form -> form.disable()); // Tắt form login mặc định
+            .formLogin(form -> form.disable());
 
         return http.build();
     }

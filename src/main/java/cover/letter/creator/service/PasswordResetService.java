@@ -32,7 +32,7 @@ public class PasswordResetService {
 
         resetToken.setToken(token);
         resetToken.setUser(user);
-        resetToken.setExpiryDate(LocalDateTime.now().plusHours(1));
+        resetToken.setExpiryDate(LocalDateTime.now().plusMinutes(30));
         resetToken.setUsed(false);
 
         tokenRepository.save(resetToken);
