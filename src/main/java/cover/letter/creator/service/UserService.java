@@ -346,8 +346,12 @@ public class UserService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        if (passwordEncoder.matches(newPassword, user.getPassword())) {
-            throw new IllegalArgumentException("Mật khẩu mới không được trùng với mật khẩu hiện tại");
+        if (user.getPassword() != null && !user.getPassword().trim().isEmpty()) {
+            throw new IllegalArgumentException("Tài khoản đã có mật khẩu. Vui lòng sử dụng tính năng đổi mật khẩu có xác nhận mật khẩu cũ.");
+        }
+
+        if (newPassword == null || newPassword.length() < 8) {
+            throw new IllegalArgumentException("Mật khẩu mới phải có ít nhất 8 ký tự");
         }
 
         user.setPassword(passwordEncoder.encode(newPassword));
@@ -482,6 +486,7 @@ public class UserService {
             : new HashSet<>();
 
         dto.setLovedModernTemplates(lovedModernTemplateDTOs);
+        dto.setHasPassword(user.getPassword() != null && !user.getPassword().trim().isEmpty());
 
         return dto;
     }
