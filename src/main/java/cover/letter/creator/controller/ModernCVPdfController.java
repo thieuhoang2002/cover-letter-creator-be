@@ -38,7 +38,7 @@ public class ModernCVPdfController {
 
             if (request.getId() != null && !request.getId().isEmpty()) {
                 try {
-                    modernCVPdfService.saveModernCVPdf(fileName, request.getId(), templateName);
+                    modernCVPdfService.saveModernCVPdf(fileName, pdfBytes, request.getId(), templateName);
                 } catch (Exception ex) {
                     // ignore
                 }

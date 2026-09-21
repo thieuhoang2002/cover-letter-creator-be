@@ -62,3 +62,13 @@ spring.mail.properties.mail.smtp.starttls.enable=true
 # ===================================================================
 # Register & generate free key at: https://console.groq.com/keys
 api.key=your_groq_api_key_here
+
+# ===================================================================
+# 8. CLOUDFLARE R2 STORAGE (S3-Compatible Object Storage)
+# ===================================================================
+# Find account-id in Cloudflare Dashboard URL or R2 Overview
+cloudflare.r2.account-id=your_cloudflare_account_id
+cloudflare.r2.access-key=your_r2_access_key_id
+cloudflare.r2.secret-key=your_r2_secret_access_key
+cloudflare.r2.bucket-name=cover-letter-cv-storage
+cloudflare.r2.public-url=https://pub-your_bucket_hash.r2.dev

@@ -36,10 +36,10 @@ public class PdfController {
             String safeDate = request.getDate() != null ? request.getDate().replace("/", "-").replace(" ", "_") : "today";
             String fileName = templateName.replace(" ", "_") + "_" + emailPrefix + "_" + safeDate + ".pdf";
 
-            // Tùy chọn lưu metadata vào DB nếu có userId
+            // Tùy chọn upload lên R2 và lưu metadata vào DB nếu có userId
             if (request.getId() != null && !request.getId().isEmpty()) {
                 try {
-                    coverLetterPdfService.saveCoverLetterPdf(fileName, request.getId(), templateName);
+                    coverLetterPdfService.saveCoverLetterPdf(fileName, pdfBytes, request.getId(), templateName);
                 } catch (Exception ex) {
                     // Không ngắt tiến trình download nếu lưu DB gặp lỗi nhỏ
                 }

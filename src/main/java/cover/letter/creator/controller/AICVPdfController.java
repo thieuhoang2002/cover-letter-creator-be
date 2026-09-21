@@ -38,7 +38,7 @@ public class AICVPdfController {
 
             if (request.getId() != null && !request.getId().isEmpty()) {
                 try {
-                    aicvPdfService.saveAICVPdf(fileName, request.getId(), templateName);
+                    aicvPdfService.saveAICVPdf(fileName, pdfBytes, request.getId(), templateName);
                 } catch (Exception ex) {
                     // ignore
                 }

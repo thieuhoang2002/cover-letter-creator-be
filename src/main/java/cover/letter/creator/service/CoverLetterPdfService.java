@@ -25,8 +25,14 @@ public class CoverLetterPdfService {
     @Autowired
     private TemplateRepository templateRepository;
 
+    @Autowired
+    private CloudflareR2Service cloudflareR2Service;
+
     @Transactional
-    public CoverLetterPdf saveCoverLetterPdf(String fileUrl, String userId, String templateName) {
+    public CoverLetterPdf saveCoverLetterPdf(String fileName, byte[] pdfBytes, String userId, String templateName) {
+        // Upload lên Cloudflare R2 để lấy URL lưu trữ
+        String fileUrl = cloudflareR2Service.uploadPdf(fileName, pdfBytes);
+
         // Lấy User từ userId
         User user = userRepository.findById(Integer.parseInt(userId))
                 .orElseThrow(() -> new IllegalArgumentException("User not found with ID: " + userId));
@@ -37,7 +43,7 @@ public class CoverLetterPdfService {
 
         // Tạo đối tượng CoverLetterPdf
         CoverLetterPdf coverLetterPdf = new CoverLetterPdf();
-        coverLetterPdf.setUrlGoogleDrive(fileUrl != null ? fileUrl : "");
+        coverLetterPdf.setUrlGoogleDrive(fileUrl);
         coverLetterPdf.setUser(user);
         coverLetterPdf.setTemplate(template);
         coverLetterPdf.setCreatedAt(new Date());
@@ -57,6 +63,9 @@ public class CoverLetterPdfService {
     // Xóa CoverLetterPdf theo id
     @Transactional
     public void deleteCoverLetterPdf(Integer id) {
-        coverLetterPdfRepository.deleteById(id);
+        coverLetterPdfRepository.findById(id).ifPresent(pdf -> {
+            cloudflareR2Service.deleteFile(pdf.getUrlGoogleDrive());
+            coverLetterPdfRepository.deleteById(id);
+        });
     }
 }

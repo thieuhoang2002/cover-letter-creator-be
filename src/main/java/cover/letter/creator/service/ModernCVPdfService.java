@@ -25,8 +25,13 @@ public class ModernCVPdfService {
     @Autowired
     private TemplateModernCVRepository templateModernCVRepository;
 
+    @Autowired
+    private CloudflareR2Service cloudflareR2Service;
+
     @Transactional
-    public ModernCVPdf saveModernCVPdf(String fileUrl, String userId, String templateName) {
+    public ModernCVPdf saveModernCVPdf(String fileName, byte[] pdfBytes, String userId, String templateName) {
+        String fileUrl = cloudflareR2Service.uploadPdf(fileName, pdfBytes);
+
         // Lấy User từ userId
         User user = userRepository.findById(Integer.parseInt(userId))
                 .orElseThrow(() -> new IllegalArgumentException("User not found with ID: " + userId));
@@ -37,7 +42,7 @@ public class ModernCVPdfService {
 
         // Tạo đối tượng ModernCVPdf
         ModernCVPdf coverLetterPdf = new ModernCVPdf();
-        coverLetterPdf.setUrlGoogleDrive(fileUrl != null ? fileUrl : "");
+        coverLetterPdf.setUrlGoogleDrive(fileUrl);
         coverLetterPdf.setUser(user);
         coverLetterPdf.setTemplateModernCV(template);
         coverLetterPdf.setCreatedAt(new Date());
@@ -57,6 +62,9 @@ public class ModernCVPdfService {
     // Xóa ModernCVPdf theo id
     @Transactional
     public void deleteModernCVPdf(Integer id) {
-        modernCVPdfRepository.deleteById(id);
+        modernCVPdfRepository.findById(id).ifPresent(pdf -> {
+            cloudflareR2Service.deleteFile(pdf.getUrlGoogleDrive());
+            modernCVPdfRepository.deleteById(id);
+        });
     }
 }
