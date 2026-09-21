@@ -8,6 +8,31 @@ SET NAMES utf8mb4;
 SET CHARACTER SET utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
 
+-- 0. TỰ ĐỘNG TẠO BẢNG NẾU CHƯA CÓ
+CREATE TABLE IF NOT EXISTS templates (
+  id int(11) NOT NULL AUTO_INCREMENT,
+  content text NOT NULL,
+  image varchar(255) DEFAULT NULL,
+  name varchar(255) NOT NULL,
+  status varchar(50) DEFAULT 'active',
+  type varchar(255) NOT NULL,
+  update_date datetime(6) DEFAULT NULL,
+  views int(11) DEFAULT 0,
+  PRIMARY KEY (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS modern_cv_templates (
+  id int(11) NOT NULL AUTO_INCREMENT,
+  content text NOT NULL,
+  image varchar(255) DEFAULT NULL,
+  name varchar(255) NOT NULL,
+  status varchar(50) DEFAULT 'active',
+  type varchar(255) NOT NULL,
+  update_date datetime(6) DEFAULT NULL,
+  views int(11) DEFAULT 0,
+  PRIMARY KEY (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 -- 1. BẢNG TEMPLATES (COVER LETTER - ĐƠN XIN VIỆC: 3 MẪU NHÀ NƯỚC + 3 MẪU HIỆN ĐẠI)
 DELETE FROM templates;
 
