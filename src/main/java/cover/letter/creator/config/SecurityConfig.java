@@ -78,6 +78,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/ai-cv/pdf/**").authenticated() //api xuất pdf
                 .requestMatchers("/api/users/**").authenticated() //api quản lý thông tin users
                 .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers("/api/ai/health").permitAll() // public health check endpoint
                 .requestMatchers("/api/ai/**").authenticated()
                 .requestMatchers("/api/follow-cv/**").authenticated()
                 .anyRequest().authenticated() // Các request khác yêu cầu xác thực
