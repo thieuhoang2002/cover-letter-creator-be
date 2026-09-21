@@ -20,11 +20,14 @@ Backend RESTful API phục vụ hệ sinh thái **Cover Letter & Modern CV Creat
 
 ## 🌟 Tính Năng Nổi Bật
 
-- 🔐 **Xác thực & Bảo mật:**
-  - JWT Authentication (HMAC-SHA512) thế hệ mới với bộ giải mã siêu bền bỉ (hỗ trợ Base64, Base64URL và băm tự động SHA-512).
+- 🔐 **Xác thực & Bảo mật Toàn diện:**
+  - JWT Authentication (HMAC-SHA512) thế hệ mới với claim role chuẩn hóa (`user` / `admin`).
+  - Spring Security 6 RBAC: Bảo vệ nghiêm ngặt các endpoint quản trị `/api/users/profile`, tạo/sửa/xóa mẫu templates.
+  - **In-Memory Rate Limiting (Bucket4j)**: Giới hạn tần suất gọi API Đăng nhập, Đăng ký, Quên mật khẩu và AI Groq (trả về HTTP 429 Too Many Requests).
+  - Quy trình khôi phục mật khẩu bảo mật qua email, sửa lỗi timezone lệch giờ hết hạn token.
+  - API kiểm tra mật khẩu (`has-password`) và đổi mật khẩu không cần mật khẩu cũ (`change-password-without-old`) cho tài khoản Google/GitHub.
   - Hỗ trợ Social Login đa nền tảng: Google OAuth2 & GitHub OAuth2.
-  - CORS linh hoạt (`setAllowedOriginPatterns("*")`) tương thích trơn tru với Vercel và localhost.
-  - Quy trình khôi phục mật khẩu bảo mật qua mã xác thực gửi bằng Gmail SMTP.
+  - CORS linh hoạt tương thích trơn tru với Vercel và môi trường phát triển cục bộ.
 - 🤖 **Sinh nội dung CV bằng AI (Groq Cloud):**
   - Tích hợp **Groq Cloud API** sử dụng model tiên tiến **`openai/gpt-oss-120b`** (Primary) kết hợp cơ chế tự động fallback sang **`llama-3.3-70b-versatile`** khi gặp lỗi quota hoặc service quá tải.
   - Tự động định dạng HTML và CSS Inline chuẩn tỉ lệ A4, tối ưu chống tràn trang khi xuất PDF.
