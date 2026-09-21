@@ -95,7 +95,7 @@ public class SecurityConfig {
                 .requestMatchers(org.springframework.http.HttpMethod.DELETE, "/api/users/profile/**").hasRole("ADMIN")
 
                 // 5. User Self-Service Operations (Profile & Password Change & Favorites)
-                .requestMatchers("/api/users/profile/me/**").hasAnyRole("USER", "ADMIN")
+                .requestMatchers("/api/users/profile/me", "/api/users/profile/me/**").hasAnyRole("USER", "ADMIN")
                 .requestMatchers("/api/users/profile/change-password", "/api/users/profile/change-password-without-old", "/api/users/profile/has-password").hasAnyRole("USER", "ADMIN")
 
                 // 6. User Operations (PDF Export, AI, Follow CV)
