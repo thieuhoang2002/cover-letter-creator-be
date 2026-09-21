@@ -76,7 +76,6 @@ public class SecurityConfig {
                 .requestMatchers("/api/modern-cv/pdf/**").authenticated() //api xuất pdf
                 .requestMatchers("/api/ai-cv/pdf/**").authenticated() //api xuất pdf
                 .requestMatchers("/api/users/**").authenticated() //api quản lý thông tin users
-                .requestMatchers("/api/drive/**").permitAll()
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/api/ai/**").authenticated()
                 .requestMatchers("/api/follow-cv/**").authenticated()

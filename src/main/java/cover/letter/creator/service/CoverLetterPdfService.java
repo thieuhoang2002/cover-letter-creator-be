@@ -6,12 +6,10 @@ import cover.letter.creator.model.User;
 import cover.letter.creator.repository.CoverLetterPdfRepository;
 import cover.letter.creator.repository.TemplateRepository;
 import cover.letter.creator.repository.UserRepository;
-import com.google.api.services.drive.Drive;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.io.IOException;
 import java.util.Date;
 import java.util.List;
 
@@ -27,14 +25,8 @@ public class CoverLetterPdfService {
     @Autowired
     private TemplateRepository templateRepository;
 
-    @Autowired
-    private Drive driveService; // Tiêm Drive để thao tác với Google Drive
-
     @Transactional
-    public CoverLetterPdf saveCoverLetterPdf(String fileId, String userId, String templateName) {
-        // Tạo URL Google Drive từ fileId
-        String googleDriveUrl = "https://drive.google.com/file/d/" + fileId + "/view";
-
+    public CoverLetterPdf saveCoverLetterPdf(String fileUrl, String userId, String templateName) {
         // Lấy User từ userId
         User user = userRepository.findById(Integer.parseInt(userId))
                 .orElseThrow(() -> new IllegalArgumentException("User not found with ID: " + userId));
@@ -45,7 +37,7 @@ public class CoverLetterPdfService {
 
         // Tạo đối tượng CoverLetterPdf
         CoverLetterPdf coverLetterPdf = new CoverLetterPdf();
-        coverLetterPdf.setUrlGoogleDrive(googleDriveUrl);
+        coverLetterPdf.setUrlGoogleDrive(fileUrl != null ? fileUrl : "");
         coverLetterPdf.setUser(user);
         coverLetterPdf.setTemplate(template);
         coverLetterPdf.setCreatedAt(new Date());
@@ -64,29 +56,7 @@ public class CoverLetterPdfService {
 
     // Xóa CoverLetterPdf theo id
     @Transactional
-    public void deleteCoverLetterPdf(Integer id) throws IOException {
-        // Tìm bản ghi trong database
-        CoverLetterPdf coverLetterPdf = coverLetterPdfRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("CoverLetterPdf not found with ID: " + id));
-
-        // Trích xuất fileId từ URL Google Drive
-        String fileId = extractFileIdFromUrl(coverLetterPdf.getUrlGoogleDrive());
-
-        // Xóa file trên Google Drive
-        driveService.files().delete(fileId).execute();
-
-        // Xóa bản ghi trong database
+    public void deleteCoverLetterPdf(Integer id) {
         coverLetterPdfRepository.deleteById(id);
-    }
-
-    // Hàm hỗ trợ để trích xuất fileId từ URL Google Drive
-    private String extractFileIdFromUrl(String url) {
-        // URL dạng: https://drive.google.com/file/d/<fileId>/view
-        String[] parts = url.split("/d/");
-        if (parts.length < 2) {
-            throw new IllegalArgumentException("Invalid Google Drive URL: " + url);
-        }
-        String filePart = parts[1];
-        return filePart.split("/")[0]; // Lấy fileId
     }
 }
