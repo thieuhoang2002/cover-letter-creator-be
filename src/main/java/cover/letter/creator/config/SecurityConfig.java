@@ -94,16 +94,20 @@ public class SecurityConfig {
                 .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/users/profile").hasRole("ADMIN")
                 .requestMatchers(org.springframework.http.HttpMethod.DELETE, "/api/users/profile/**").hasRole("ADMIN")
 
-                // 5. User Self-Service Operations (Profile & Password Change & Favorites)
+                // 5. User Self-Service Operations (Profile & Password Change & Favorites & Avatar)
                 .requestMatchers("/api/users/profile/me", "/api/users/profile/me/**").hasAnyRole("USER", "ADMIN")
                 .requestMatchers("/api/users/profile/change-password", "/api/users/profile/change-password-without-old", "/api/users/profile/has-password").hasAnyRole("USER", "ADMIN")
 
-                // 6. User Operations (PDF Export, AI, Follow CV)
+                // 6. User Operations (PDF Export, AI, Follow CV, VIP)
                 .requestMatchers("/api/pdf/**", "/api/modern-cv/pdf/**", "/api/ai-cv/pdf/**").hasAnyRole("USER", "ADMIN")
                 .requestMatchers("/api/ai/**").hasAnyRole("USER", "ADMIN")
                 .requestMatchers("/api/follow-cv/**").hasAnyRole("USER", "ADMIN")
+                .requestMatchers("/api/vip/**").hasAnyRole("USER", "ADMIN")
 
-                // 7. Any other request requires authentication
+                // 7. Admin ONLY — VIP Management
+                .requestMatchers("/api/admin/vip-requests/**").hasRole("ADMIN")
+
+                // 8. Any other request requires authentication
                 .anyRequest().authenticated()
             )
             .exceptionHandling(exception -> exception

@@ -31,6 +31,18 @@ public class FollowedCV {
     @Column(name = "status", nullable = false)
     private String status = "pending";
 
+    /**
+     * Nguồn của CV: "system" (theo dõi bằng link) hoặc "uploaded" (người dùng tự upload file PDF)
+     */
+    @Column(name = "source")
+    private String source = "system";
+
+    /**
+     * Dung lượng file (bytes) — chỉ áp dụng khi source = "uploaded"
+     */
+    @Column(name = "file_size")
+    private Long fileSize;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
-}
+}

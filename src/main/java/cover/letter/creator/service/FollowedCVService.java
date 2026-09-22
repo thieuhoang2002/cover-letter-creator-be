@@ -26,6 +26,11 @@ public class FollowedCVService {
         return followedCVRepository.save(followedCV);
     }
 
+    /** Lưu trực tiếp FollowedCV đã được chuẩn bị đầy đủ (dùng cho upload PDF) */
+    public FollowedCV addFollowedCVDirect(FollowedCV followedCV) {
+        return followedCVRepository.save(followedCV);
+    }
+
     public List<FollowedCV> getFollowedCVsByUserEmail(String email) {
         return followedCVRepository.findByUserEmail(email);
     }

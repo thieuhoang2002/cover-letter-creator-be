@@ -42,4 +42,10 @@ public class HtmlGenerationController {
             "service", "CV Generator API"
         ));
     }
+
+    /** GET /api/ai/queue-status — FE dùng để hiển thị thông tin hàng đợi */
+    @GetMapping("/queue-status")
+    public ResponseEntity<Map<String, Object>> getQueueStatus() {
+        return ResponseEntity.ok(groqAIService.getQueueStatus());
+    }
 }

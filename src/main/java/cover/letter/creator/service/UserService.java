@@ -45,6 +45,10 @@ public class UserService {
         return userRepository.findByEmail(email);
     }
 
+    public User saveUser(User user) {
+        return userRepository.save(user);
+    }
+
     public User registerUser(User user) {
         if (user.getPassword() != null && !user.getPassword().isEmpty()) {
             user.setPassword(passwordEncoder.encode(user.getPassword()));

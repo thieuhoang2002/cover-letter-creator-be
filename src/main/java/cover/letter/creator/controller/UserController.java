@@ -7,23 +7,27 @@ import cover.letter.creator.dto.UserProfileDTO;
 import cover.letter.creator.dto.UserProfileUpdateRequest;
 import cover.letter.creator.model.Template;
 import cover.letter.creator.model.User;
+import cover.letter.creator.service.CloudflareR2Service;
 import cover.letter.creator.service.TemplateService;
 import cover.letter.creator.service.TemplateModernCVService;
 import cover.letter.creator.service.UserService;
 import jakarta.transaction.Transactional;
 import cover.letter.creator.model.TemplateModernCV;
 
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -48,11 +52,68 @@ public class UserController {
     
     @Autowired
     private JwtUtil jwtUtil;
-    
+
+    @Autowired
+    private CloudflareR2Service cloudflareR2Service;
+
+    private static final List<String> ALLOWED_IMAGE_TYPES = Arrays.asList(
+        "image/jpeg", "image/jpg", "image/png", "image/webp"
+    );
+
+    // ===== AVATAR UPLOAD =====
+    @PostMapping(value = "/me/avatar", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> uploadAvatar(
+            @RequestHeader("Authorization") String token,
+            @RequestParam("file") MultipartFile file) {
+        try {
+            // Validate content type
+            String contentType = file.getContentType();
+            if (contentType == null || !ALLOWED_IMAGE_TYPES.contains(contentType.toLowerCase())) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(Map.of("message", "Chỉ chấp nhận định dạng .jpg, .png, .webp"));
+            }
+            // Validate file size (2MB max)
+            if (file.getSize() > 2 * 1024 * 1024) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(Map.of("message", "Ảnh không được vượt quá 2MB"));
+            }
+
+            String jwt = token.replace("Bearer ", "");
+            String email = jwtUtil.extractEmail(jwt);
+
+            // Build unique filename: avatars/{uuid}.{ext}
+            String originalFilename = file.getOriginalFilename();
+            String ext = (originalFilename != null && originalFilename.contains("."))
+                    ? originalFilename.substring(originalFilename.lastIndexOf("."))
+                    : ".jpg";
+            String fileName = "avatars/" + UUID.randomUUID() + ext;
+
+            // Upload to R2
+            String avatarUrl = cloudflareR2Service.uploadFile(fileName, file.getBytes(), contentType);
+
+            // Update DB
+            Optional<User> userOpt = userService.getUserByEmail(email);
+            if (userOpt.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Không tìm thấy người dùng"));
+            }
+            User user = userOpt.get();
+            user.setAvatarUrl(avatarUrl);
+            userService.saveUser(user);
+
+            logger.info("Avatar updated for user '{}': {}", email, avatarUrl);
+            return ResponseEntity.ok(Map.of("avatarUrl", avatarUrl, "message", "Cập nhật ảnh đại diện thành công!"));
+        } catch (Exception e) {
+            logger.error("Error uploading avatar: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("message", "Lỗi khi tải ảnh lên: " + e.getMessage()));
+        }
+    }
+
     @GetMapping
     public List<User> getAllUsers() {
         return userService.getAllUsers();
     }
+
 
 //    @GetMapping("/{id}")
 //    public ResponseEntity<User> getUserById(@PathVariable Integer id) {

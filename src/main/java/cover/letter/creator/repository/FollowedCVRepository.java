@@ -15,4 +15,7 @@ public interface FollowedCVRepository extends JpaRepository<FollowedCV, Long> {
 
     @Query("SELECT f FROM FollowedCV f JOIN User u ON f.userId = u.id WHERE f.id = :id AND u.email = :email")
     Optional<FollowedCV> findByIdAndUserEmail(Long id, String email);
-}
+
+    @Query("SELECT COUNT(f) FROM FollowedCV f WHERE f.userId = :userId AND f.source = 'uploaded'")
+    long countUploadedByUserId(Integer userId);
+}

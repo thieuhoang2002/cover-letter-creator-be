@@ -61,9 +61,20 @@ public class CloudflareR2Service {
      * Upload mảng byte PDF lên Cloudflare R2
      * @param fileName Tên file (ví dụ: my_cv.pdf)
      * @param pdfBytes Dữ liệu nhị phân PDF
-     * @return Public URL truy cập file hoặc null nếu chưa config
+     * @return Public URL truy cập file hoặc fileName nếu chưa config
      */
     public String uploadPdf(String fileName, byte[] pdfBytes) {
+        return uploadFile(fileName, pdfBytes, "application/pdf");
+    }
+
+    /**
+     * Upload bất kỳ loại file nào lên Cloudflare R2
+     * @param fileName Key trong bucket (ví dụ: avatars/uuid.jpg, customer-cvs/uuid.pdf)
+     * @param fileBytes Dữ liệu nhị phân
+     * @param contentType MIME type (image/jpeg, image/png, application/pdf, ...)
+     * @return Public URL hoặc fileName nếu chưa config
+     */
+    public String uploadFile(String fileName, byte[] fileBytes, String contentType) {
         try {
             S3Client s3 = getS3Client();
             if (s3 == null) {
@@ -74,13 +85,12 @@ public class CloudflareR2Service {
             PutObjectRequest putObjectRequest = PutObjectRequest.builder()
                     .bucket(bucketName.trim())
                     .key(fileName)
-                    .contentType("application/pdf")
+                    .contentType(contentType)
                     .build();
 
-            s3.putObject(putObjectRequest, RequestBody.fromBytes(pdfBytes));
-            logger.info("Successfully uploaded file '{}' to Cloudflare R2 bucket '{}'", fileName, bucketName);
+            s3.putObject(putObjectRequest, RequestBody.fromBytes(fileBytes));
+            logger.info("Successfully uploaded '{}' ({}) to Cloudflare R2 bucket '{}'", fileName, contentType, bucketName);
 
-            // Trả về Public URL nếu có cấu hình domain/dev URL
             if (publicUrl != null && !publicUrl.trim().isEmpty()) {
                 String baseUrl = publicUrl.trim().replaceAll("/+$", "");
                 return baseUrl + "/" + fileName;
