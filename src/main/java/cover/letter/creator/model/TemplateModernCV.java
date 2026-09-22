@@ -7,10 +7,8 @@ import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 @Entity
 @Table(name = "modern_cv_templates")
@@ -42,14 +40,39 @@ public class TemplateModernCV {
     @Column(columnDefinition = "VARCHAR(50) DEFAULT 'active'")
     private String status = "active";
 
-    // ManyToMany with User (usersWhoLoved)
     @ManyToMany(mappedBy = "lovedTemplatesModern")
     @JsonIgnore
     private Set<User> usersWhoLoved = new HashSet<>();
 
-    
     @Transient
     private boolean isFavorite;
+
+    public Integer getId() { return id; }
+    public void setId(Integer id) { this.id = id; }
+
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+
+    public String getType() { return type; }
+    public void setType(String type) { this.type = type; }
+
+    public String getContent() { return content; }
+    public void setContent(String content) { this.content = content; }
+
+    public String getImage() { return image; }
+    public void setImage(String image) { this.image = image; }
+
+    public Integer getViews() { return views; }
+    public void setViews(Integer views) { this.views = views; }
+
+    public LocalDateTime getUpdateDate() { return updateDate; }
+    public void setUpdateDate(LocalDateTime updateDate) { this.updateDate = updateDate; }
+
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
+
+    public Set<User> getUsersWhoLoved() { return usersWhoLoved; }
+    public void setUsersWhoLoved(Set<User> usersWhoLoved) { this.usersWhoLoved = usersWhoLoved; }
 
     public boolean isFavorite() {
         return isFavorite;
@@ -71,6 +94,4 @@ public class TemplateModernCV {
     public int hashCode() {
         return getClass().hashCode();
     }
-    
-
 }

@@ -98,6 +98,18 @@ public class UserController {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Không tìm thấy người dùng"));
             }
             User user = userOpt.get();
+
+            // Nếu user đã có avatar cũ lưu trên Cloudflare R2 (chứa /avatars/), xóa file cũ đi
+            String oldAvatarUrl = user.getAvatarUrl();
+            if (oldAvatarUrl != null && oldAvatarUrl.contains("/avatars/")) {
+                try {
+                    cloudflareR2Service.deleteFile(oldAvatarUrl);
+                    logger.info("Deleted old R2 avatar for user '{}': {}", email, oldAvatarUrl);
+                } catch (Exception ex) {
+                    logger.warn("Could not delete old R2 avatar: {}", ex.getMessage());
+                }
+            }
+
             user.setAvatarUrl(avatarUrl);
             userService.saveUser(user);
 

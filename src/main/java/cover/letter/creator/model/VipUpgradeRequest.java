@@ -39,4 +39,31 @@ public class VipUpgradeRequest {
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+
+    public Integer getUserId() { return userId; }
+    public void setUserId(Integer userId) { this.userId = userId; }
+
+    public String getUserEmail() { return userEmail; }
+    public void setUserEmail(String userEmail) { this.userEmail = userEmail; }
+
+    public String getPlan() { return plan; }
+    public void setPlan(String plan) { this.plan = plan; }
+
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
+
+    public String getNote() { return note; }
+    public void setNote(String note) { this.note = note; }
+
+    public String getAdminNote() { return adminNote; }
+    public void setAdminNote(String adminNote) { this.adminNote = adminNote; }
+
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+
+    public LocalDateTime getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
 }

@@ -4,7 +4,6 @@ import jakarta.persistence.*;
 import lombok.Data;
 import java.util.Date;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @Entity
@@ -18,11 +17,23 @@ public class AICVPdf {
     @Column(name = "url_google_drive", nullable = false)
     private String urlGoogleDrive;
 
-    @JsonIgnoreProperties({"coverLetters"}) // Bỏ qua danh sách coverLetters trong User để tránh vòng lặp
+    @JsonIgnoreProperties({"coverLetters"})
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
     @Column(name = "created_at", nullable = false)
     private Date createdAt;
+
+    public Integer getId() { return id; }
+    public void setId(Integer id) { this.id = id; }
+
+    public String getUrlGoogleDrive() { return urlGoogleDrive; }
+    public void setUrlGoogleDrive(String urlGoogleDrive) { this.urlGoogleDrive = urlGoogleDrive; }
+
+    public User getUser() { return user; }
+    public void setUser(User user) { this.user = user; }
+
+    public Date getCreatedAt() { return createdAt; }
+    public void setCreatedAt(Date createdAt) { this.createdAt = createdAt; }
 }

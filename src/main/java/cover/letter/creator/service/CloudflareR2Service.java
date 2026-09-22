@@ -105,6 +105,7 @@ public class CloudflareR2Service {
 
     /**
      * Xóa file khỏi Cloudflare R2
+     * @param fileKeyOrUrl Key trong bucket (ví dụ: customer-cvs/1/uuid.pdf) hoặc Full URL
      */
     public void deleteFile(String fileKeyOrUrl) {
         try {
@@ -113,10 +114,22 @@ public class CloudflareR2Service {
                 return;
             }
 
-            // Tách key từ URL nếu truyền vào là full URL
-            String fileKey = fileKeyOrUrl;
-            if (fileKey.contains("/")) {
-                fileKey = fileKey.substring(fileKey.lastIndexOf("/") + 1);
+            String fileKey = fileKeyOrUrl.trim();
+
+            // Nếu truyền vào full public URL, bóc tách phần path phía sau domain
+            if (publicUrl != null && !publicUrl.trim().isEmpty()) {
+                String baseUrl = publicUrl.trim().replaceAll("/+$", "");
+                if (fileKey.startsWith(baseUrl)) {
+                    fileKey = fileKey.substring(baseUrl.length()).replaceAll("^/+", "");
+                }
+            }
+
+            // Nếu vẫn là full URL (http:// hoặc https://)
+            if (fileKey.startsWith("http://") || fileKey.startsWith("https://")) {
+                try {
+                    java.net.URI uri = java.net.URI.create(fileKey);
+                    fileKey = uri.getPath().replaceAll("^/+", "");
+                } catch (Exception ignored) {}
             }
 
             DeleteObjectRequest deleteRequest = DeleteObjectRequest.builder()
@@ -125,7 +138,7 @@ public class CloudflareR2Service {
                     .build();
 
             s3.deleteObject(deleteRequest);
-            logger.info("Deleted file '{}' from Cloudflare R2 bucket '{}'", fileKey, bucketName);
+            logger.info("Successfully requested deletion of key '{}' from Cloudflare R2 bucket '{}'", fileKey, bucketName);
         } catch (Exception e) {
             logger.error("Failed to delete file from Cloudflare R2: {}", e.getMessage(), e);
         }

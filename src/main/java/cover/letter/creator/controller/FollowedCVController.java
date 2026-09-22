@@ -42,6 +42,9 @@ public class FollowedCVController {
     @Autowired
     private FollowedCVRepository followedCVRepository;
 
+    private static final int FREE_UPLOAD_QUOTA = 3;
+    private static final int VIP_UPLOAD_QUOTA = 30;
+
     // ===== UPLOAD PDF CV TỪ MÁY =====
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> uploadCvPdf(
@@ -68,16 +71,19 @@ public class FollowedCVController {
             User user = userRepository.findByEmail(email)
                     .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng"));
 
-            // Check VIP quota (only for non-VIP users)
-            boolean isVip = "vip".equalsIgnoreCase(user.getRole()) || "admin".equalsIgnoreCase(user.getRole());
-            if (!isVip) {
-                long uploadedCount = followedCVRepository.countUploadedByUserId(user.getId());
-                if (uploadedCount >= FREE_UPLOAD_QUOTA) {
-                    return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                            .body(new ApiResponse(false,
-                                    "Tài khoản Free chỉ được upload tối đa " + FREE_UPLOAD_QUOTA + " file CV. Vui lòng nâng cấp VIP để tiếp tục!",
-                                    Map.of("quotaExceeded", true, "uploadedCount", uploadedCount, "maxQuota", FREE_UPLOAD_QUOTA)));
-                }
+            // Check quota: Free = 3, VIP = 30, Admin = Unlimited
+            boolean isAdmin = "admin".equalsIgnoreCase(user.getRole());
+            boolean isVip = "vip".equalsIgnoreCase(user.getRole());
+            int maxQuota = isAdmin ? Integer.MAX_VALUE : (isVip ? VIP_UPLOAD_QUOTA : FREE_UPLOAD_QUOTA);
+            long uploadedCount = followedCVRepository.countUploadedByUserId(user.getId());
+
+            if (uploadedCount >= maxQuota) {
+                String quotaMsg = isVip
+                        ? "Tài khoản VIP đã đạt giới hạn tối đa " + VIP_UPLOAD_QUOTA + " file CV PDF. Vui lòng liên hệ Admin để nâng cấp gói Enterprise!"
+                        : "Tài khoản Miễn phí chỉ được upload tối đa " + FREE_UPLOAD_QUOTA + " file CV. Vui lòng nâng cấp VIP để tải lên đến " + VIP_UPLOAD_QUOTA + " file!";
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(new ApiResponse(false, quotaMsg,
+                                Map.of("quotaExceeded", true, "uploadedCount", uploadedCount, "maxQuota", maxQuota, "isVip", isVip)));
             }
 
             // Upload to R2: customer-cvs/{userId}/{uuid}.pdf
@@ -112,13 +118,18 @@ public class FollowedCVController {
             String email = jwtUtil.extractEmail(token.replace("Bearer ", ""));
             User user = userRepository.findByEmail(email)
                     .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng"));
-            boolean isVip = "vip".equalsIgnoreCase(user.getRole()) || "admin".equalsIgnoreCase(user.getRole());
+            boolean isAdmin = "admin".equalsIgnoreCase(user.getRole());
+            boolean isVip = "vip".equalsIgnoreCase(user.getRole());
             long used = followedCVRepository.countUploadedByUserId(user.getId());
+            int max = isAdmin ? -1 : (isVip ? VIP_UPLOAD_QUOTA : FREE_UPLOAD_QUOTA);
+            int remaining = isAdmin ? -1 : Math.max(0, max - (int) used);
+
             return ResponseEntity.ok(Map.of(
                     "isVip", isVip,
+                    "isAdmin", isAdmin,
                     "used", used,
-                    "max", isVip ? -1 : FREE_UPLOAD_QUOTA,
-                    "remaining", isVip ? -1 : Math.max(0, FREE_UPLOAD_QUOTA - used)
+                    "max", max,
+                    "remaining", remaining
             ));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
