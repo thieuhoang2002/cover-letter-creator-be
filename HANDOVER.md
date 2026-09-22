@@ -5,42 +5,41 @@
 | Yêu cầu | Phiên bản | Ghi chú |
 |---|---|---|
 | **Java** | **21** (JDK 21 LTS) | Bắt buộc để tương thích Spring Boot 3.4.3 |
-| **Maven** | Không cần cài ngoài | Sử dụng trực tiếp wrapper `mvnw` hoặc `mvnw.cmd` |
-| **MySQL** | 8.0+ / MariaDB | Khuyến nghị dùng XAMPP MySQL trên port 3306 |
-| **Groq Cloud API Key** | Cung cấp bởi Groq | Đăng ký miễn phí tại https://console.groq.com/keys |
-| **Cloudflare R2** | S3-Compatible Storage | Cấu hình Account ID, Access Key, Secret Key, Bucket |
+| **Maven** | Không cần cài ngoài | Sử dụng trực tiếp wrapper `./mvnw` hoặc `.\mvnw.cmd` |
+| **Database** | TiDB Cloud Serverless / MySQL 8.0+ | Hỗ trợ kết nối đám mây SSL hoặc local XAMPP |
+| **Groq Cloud API Key** | Cung cấp bởi Groq | Đăng ký miễn phí tại https://console.groq.com/keys (hỗ trợ nhiều key phẩy) |
+| **Cloudflare R2** | S3-Compatible Storage | Account ID, Access Key, Secret Key, Bucket `cover-letter-cv-storage` |
 
 ---
 
 ## 2. Chuẩn Bị & Thiết Lập Cấu Hình
 
 ### 2.1. Thiết lập Cơ sở Dữ liệu
-1. Khởi động MySQL trong **XAMPP Control Panel**.
-2. Tạo database mới trong phpMyAdmin (`http://localhost/phpmyadmin`):
-   ```sql
-   CREATE DATABASE cover_letter_creator_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-   ```
-3. Sau khi khởi động ứng dụng lần đầu (để Hibernate tự sinh bảng), tiến hành nạp các template mẫu:
-   ```powershell
-   C:\xampp\mysql\bin\mysql.exe -u root cover_letter_creator_db < ..\cover-letter-creator-fe\seed_templates.sql
-   ```
+1. **Đối với TiDB Cloud Serverless (Khuyên Dùng / Production):**
+   - Đăng nhập TiDB Cloud Console -> Chọn Cluster -> Vào SQL Editor.
+   - Chạy script cập nhật [`update_tidb_database.sql`](../update_tidb_database.sql) để tạo bảng mới (`followed_cvs`, `vip_upgrade_requests`, `password_reset_token`) mà không làm mất dữ liệu cũ.
+2. **Đối với XAMPP Local MySQL:**
+   - Khởi động MySQL trong XAMPP Control Panel.
+   - Tạo DB: `CREATE DATABASE cover_letter_creator_db CHARACTER SET utf8mb4;`.
+   - Nạp dữ liệu mẫu: `init_tidb_database.sql` và `seed_templates.sql`.
 
 ### 2.2. Cấu hình Tham Số (`src/main/resources/application.properties`)
-Đảm bảo các cấu hình sau đã có trong file:
 ```properties
 # 1. Cổng máy chủ
 server.port=8080
 
-# 2. Kết nối Database
-spring.datasource.url=jdbc:mysql://localhost:3306/cover_letter_creator_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8
-spring.datasource.username=root
-spring.datasource.password=
+# 2. Kết nối Database (TiDB Cloud hoặc Local)
+spring.datasource.url=jdbc:mysql://gateway01.ap-southeast-1.prod.aws.tidbcloud.com:4000/cover_letter_creator_db?useSSL=true&requireSSL=true
+spring.datasource.username=your_tidb_user
+spring.datasource.password=your_tidb_password
 spring.jpa.hibernate.ddl-auto=update
 
-# 3. Groq Cloud AI Service
-api.key=your_groq_api_key_here
+# 3. Groq Cloud AI Service (Hỗ trợ nhiều key cách nhau bằng dấu phẩy)
+api.key=gsk_key1,gsk_key2,gsk_key3
 groq.model=openai/gpt-oss-120b
 groq.fallback-model=llama-3.3-70b-versatile
+groq.max-concurrent=3
+groq.queue-timeout-seconds=45
 
 # 4. Cloudflare R2 Storage
 cloudflare.r2.account-id=your_cloudflare_account_id
@@ -74,18 +73,15 @@ java -jar target/CoverLetterCreator-0.0.1-SNAPSHOT.jar
 ```bash
 curl -X GET http://localhost:8080/api/ai/health
 ```
+
+### 4.2. Kiểm Tra Hạn Mức Upload CV (Quota)
+```bash
+curl -X GET http://localhost:8080/api/follow-cv/quota \
+  -H "Authorization: Bearer <jwt_token>"
+```
 *Kết quả kỳ vọng:*
 ```json
-{"status":"UP","provider":"Groq Cloud API","models":["openai/gpt-oss-120b","llama-3.3-70b-versatile"]}
-```
-
-### 4.2. Lấy Danh Sách Template Mẫu
-```bash
-# Template Classic Cover Letter
-curl -X GET http://localhost:8080/api/templates/all
-
-# Template Modern CV
-curl -X GET http://localhost:8080/api/templates-modern/all
+{"used": 2, "max": 30, "remaining": 28, "isVip": true}
 ```
 
 ### 4.3. Gọi AI Sinh CV (HTML Format)
@@ -98,38 +94,21 @@ curl -X POST http://localhost:8080/api/ai/generate-cv \
     "userData": {
       "name": "Nguyễn Văn A",
       "email": "vana@example.com",
-      "phone": "0987654321",
-      "address": "Hà Nội",
       "specialization": "React & TypeScript",
-      "skills": [{"name": "React"}, {"name": "JavaScript"}, {"name": "TailwindCSS"}]
+      "skills": [{"name": "React"}, {"name": "JavaScript"}]
     }
   }'
 ```
-
-### 4.4. Xuất File PDF và Tải Trực Tiếp
-```bash
-curl -X POST http://localhost:8080/api/ai-cv/pdf/generate \
-  -H "Content-Type: application/json" \
-  -d '{
-    "htmlContent": "<div style=\"font-family: Times New Roman;\"><h1>Curriculum Vitae</h1><p>Họ tên: Nguyễn Văn A</p></div>",
-    "id": 1,
-    "email": "vana@example.com",
-    "templateName": "AI-Generated CV for Frontend",
-    "date": "21/09/2026"
-  }' \
-  --output test-download.pdf
-```
-*(File `test-download.pdf` sẽ được ghi thẳng xuống thư mục hiện hành và bản ghi sẽ được lưu trên Cloudflare R2).*
 
 ---
 
 ## 5. Các Vấn Đề Thường Gặp & Cách Khắc Phục (Troubleshooting)
 
 1. **Lỗi `400 Bad Request: model_decommissioned`:**
-   - Nguyên nhân: Groq đã tắt các model cũ như `mixtral-8x7b-32768`.
-   - Khắc phục: Kiểm tra `application.properties`, đảm bảo `groq.model=openai/gpt-oss-120b`.
-2. **Lỗi `Unknown column 'title' in 'field list'` khi thao tác bảng `ai_cv_pdf`:**
-   - Bảng `ai_cv_pdf` lưu các trường: `id`, `user_id`, `url_google_drive` (chứa R2 URL), `created_at`.
-   - Nếu cần truy vấn, dùng: `SELECT id, user_id, url_google_drive, created_at FROM ai_cv_pdf;`.
-3. **Lỗi Font chữ tiếng Việt khi xuất PDF trên Linux/Docker:**
-   - Đảm bảo cài gói `fontconfig` và `ttf-dejavu` trong Dockerfile, đồng thời thư mục `src/main/resources/fonts/` có đủ 4 file font Times New Roman.
+   - Đảm bảo `groq.model=openai/gpt-oss-120b` (model chính) và `fallback=llama-3.3-70b-versatile`.
+2. **Lỗi `429 Too Many Requests` khi gọi AI:**
+   - Hệ thống tự động chuyển sang key tiếp theo trong danh sách `api.key`. Đảm bảo bạn nạp 2-3 key dự phòng trên Render Environment Variables.
+3. **Lỗi Xóa CV trên R2 không ăn:**
+   - Đã được khắc phục trong hàm `CloudflareR2Service.deleteFile`: S3 key giữ nguyên đầy đủ tiền tố thư mục ảo (`customer-cvs/{userId}/` và `avatars/`).
+4. **Lỗi `Duplicate field FollowedCVController.FREE_UPLOAD_QUOTA`:**
+   - Đã loại bỏ biến trùng lặp, code biên dịch sạch với `./mvnw clean compile`.
