@@ -5,10 +5,12 @@
 **Cover Letter Creator Backend** là hệ thống RESTful API được xây dựng trên **Spring Boot 3.4.3** & **Java 21**, cung cấp toàn bộ logic nghiệp vụ cho nền tảng tạo và quản lý hồ sơ tuyển dụng:
 1. Quản lý hồ sơ cá nhân ứng viên (kỹ năng, kinh nghiệm, học vấn, chứng chỉ, sở thích).
 2. Quản lý và cung cấp mẫu hồ sơ (Classic Cover Letter và Modern CV) có sẵn trong cơ sở dữ liệu.
-3. Tích hợp AI thông minh (**Groq Cloud API** với model `openai/gpt-oss-120b` & `llama-3.3-70b-versatile`) tự động phân tích hồ sơ và sinh mã HTML CV hoàn chỉnh.
+3. Tích hợp AI thông minh (**Groq Cloud API** với model `openai/gpt-oss-120b` & `llama-3.3-70b-versatile`) kèm cơ chế xoay vòng nhiều API key (Multi-key comma rotation) và Semaphore concurrency limiter.
 4. Trích xuất file PDF chất lượng cao (iText html2pdf 4.0.3), trả về dạng **Binary Stream** (`application/pdf`) cho trình duyệt tải ngay lập tức, đồng thời tự động lưu trữ lên **Cloudflare R2 Storage** (S3-compatible).
-5. Chống trùng lặp tạo PDF (Deduplication Guard) ngăn ngừa double-click từ client.
-6. Quản lý lịch sử xuất PDF và theo dõi trạng thái ứng tuyển tuyển dụng (Followed CV).
+5. Tải lên file CV cá nhân dạng PDF từ máy người dùng lên Cloudflare R2 với hạn ngạch (Quota): 3 CV cho tài khoản Thường, **30 CV cho tài khoản VIP**, không giới hạn cho Admin.
+6. Cơ chế tự động dọn dẹp file (Auto-cleanup) trên Cloudflare R2: Xóa avatar cũ khi cập nhật avatar mới, xóa file PDF trên R2 khi xóa CV ứng tuyển.
+7. Chống trùng lặp tạo PDF (Deduplication Guard) ngăn ngừa double-click từ client.
+8. Quản lý lịch sử xuất PDF, theo dõi tiến trình ứng tuyển (Followed CV) và quy trình xét duyệt tài khoản VIP.
 
 ---
 
@@ -24,8 +26,9 @@ Frontend (React 18)                 Backend (Spring Boot 3.4.3)            Exter
 
 2. POST /api/ai/generate-cv ──────► HtmlGenerationController
    {position, theme, userData}      └─ GroqAIService ────────────────────► Groq Cloud API
-                                                                           Model: openai/gpt-oss-120b
-                                                                           Fallback: llama-3.3-70b-versatile
+                                       ├─ Multi-key Round-Robin            Model: openai/gpt-oss-120b
+                                       ├─ Semaphore Concurrency (max 3)    Fallback: llama-3.3-70b-versatile
+                                       └─ Timeout Queue (45s)
                                     ◄── HTML string (A4 formatted) ───────┘
 
 3. (Frontend render TinyMCE, user chỉnh sửa & preview)
@@ -42,12 +45,9 @@ Frontend (React 18)                 Backend (Spring Boot 3.4.3)            Exter
 ```
 
 ### 2.2. Luồng Tạo Cover Letter từ Template Classic
-
 ```
 1. GET /api/templates/all ────────► TemplateController → Lấy danh sách template Classic đang active
-
 2. GET /api/templates/{id} ───────► TemplateController → Lấy chi tiết mẫu + tăng view count
-
 3. POST /api/pdf/generate ────────► PdfController
    {htmlContent, id, email,         ├─ PdfService (iText html2pdf → PDF bytes)
     templateName, date}             ├─ CloudflareR2Service → Lưu trữ Cloudflare R2
@@ -56,12 +56,9 @@ Frontend (React 18)                 Backend (Spring Boot 3.4.3)            Exter
 ```
 
 ### 2.3. Luồng Tạo CV từ Template Modern
-
 ```
 1. GET /api/templates-modern/all ─► TemplateModernCVController → Lấy tất cả Modern CV template active
-
 2. GET /api/templates-modern/{id} ► TemplateModernCVController → Lấy chi tiết template theo ID
-
 3. POST /api/modern-cv/pdf/generate ► ModernCVPdfController
    {htmlContent, id, email,           ├─ PdfService (iText html2pdf → PDF bytes)
     templateName, date}               ├─ CloudflareR2Service → Lưu trữ Cloudflare R2
@@ -69,108 +66,84 @@ Frontend (React 18)                 Backend (Spring Boot 3.4.3)            Exter
                                       ◄── Binary Stream [application/pdf] tải trực tiếp về máy
 ```
 
----
-
-## 3. Chi Tiết Request / Response Các API Trọng Tâm
-
-### `POST /api/ai/generate-cv`
-- **Request Body (JSON):**
-```json
-{
-  "position": "Senior Fullstack Developer",
-  "theme": "navy",
-  "userData": {
-    "name": "Nguyễn Văn A",
-    "email": "nguyenvana@gmail.com",
-    "phone": "0901234567",
-    "address": "Hà Nội, Việt Nam",
-    "specialization": "Java & React",
-    "skills": [{"name": "Spring Boot"}, {"name": "ReactJS"}, {"name": "Docker"}],
-    "experiences": [{"company": "FPT Software", "role": "Senior Dev", "time": "2021-2024", "description": "Xây dựng hệ thống microservices..."}],
-    "educations": [{"school": "Đại học Bách Khoa Hà Nội", "degree": "Kỹ sư", "fieldOfStudy": "CNTT", "time": "2016-2021"}],
-    "certificates": [{"name": "AWS Certified Solutions Architect", "organization": "Amazon Web Services", "time": "2023"}],
-    "hobbies": [{"name": "Đọc sách công nghệ"}, {"name": "Chạy bộ marathon"}]
-  }
-}
+### 2.4. Luồng Upload CV Cá Nhân & Kiểm Soát Hạn Mức (FollowCV Quota)
 ```
-- **Response Success (200 OK):**
-```json
-{
-  "status": "success",
-  "content": "<div style=\"font-family: 'Times New Roman'; width: 210mm; ...\">...Nội dung HTML chuẩn A4...</div>"
-}
+1. GET /api/follow-cv/quota ──────► FollowedCVController
+                                    ◄── JSON { used: 2, max: 30, remaining: 28, isVip: true }
+
+2. POST /api/follow-cv/upload ────► FollowedCVController
+   [MultipartFile, name, company]   ├─ Kiểm tra Quota (User: 3, VIP: 30, Admin: vô hạn)
+                                    ├─ CloudflareR2Service.uploadFile → Lưu vào `customer-cvs/{userId}/`
+                                    ├─ FollowedCVRepository.save (source: 'uploaded', file_size: ...)
+                                    ◄── JSON FollowedCV record
+
+3. DELETE /api/follow-cv/{id} ────► FollowedCVController
+                                    ├─ FollowedCVRepository.deleteById
+                                    └─ CloudflareR2Service.deleteFile → Xóa triệt để file PDF trên R2
 ```
 
-### `POST /api/pdf/generate` / `POST /api/modern-cv/pdf/generate` / `POST /api/ai-cv/pdf/generate`
-- **Request Body (JSON):**
-```json
-{
-  "htmlContent": "<div style=\"...\">...HTML cần xuất PDF...</div>",
-  "id": 1,
-  "email": "user@example.com",
-  "templateName": "AI-Generated CV for Senior Fullstack Developer",
-  "date": "21/09/2026"
-}
+### 2.5. Luồng Cập Nhật Avatar & Dọn Dẹp File R2
 ```
-- **Response Success (200 OK):**
-  - **Content-Type:** `application/pdf`
-  - **Content-Disposition:** `attachment; filename="AI-Generated_CV_for_Senior_Fullstack_Developer_21-09-2026.pdf"`
-  - **Body:** Binary Stream (mảng byte trực tiếp của file PDF)
-- **Response Error (4xx/5xx):**
-```json
-{
-  "status": "error",
-  "message": "Chi tiết lý do lỗi..."
-}
+1. POST /api/users/profile/avatar ► UserController
+   [MultipartFile]                  ├─ Kiểm tra avatarUrl hiện tại: nếu thuộc Cloudflare R2 (/avatars/)
+                                    │   └─ CloudflareR2Service.deleteFile (Xóa avatar cũ)
+                                    ├─ CloudflareR2Service.uploadAvatar → Lưu `avatars/{uuid}.jpg`
+                                    └─ UserRepository.save(avatarUrl)
+                                    ◄── JSON { avatarUrl: "https://...r2.dev/avatars/..." }
+```
+
+### 2.6. Luồng Yêu Cầu & Quản Trị Phê Duyệt VIP
+```
+1. User gửi yêu cầu:
+   POST /api/follow-cv/vip-request  ► FollowedCVController
+   { plan: "pro", note: "..." }     └─ Lưu bản ghi vào bảng `vip_upgrade_requests` (status: 'pending')
+
+2. Admin phê duyệt:
+   GET /api/admin/vip-requests      ► VipUpgradeRequestController → Danh sách yêu cầu chờ duyệt
+   PUT /api/admin/vip-requests/{id}/approve ► Cập nhật status='approved' + cập nhật User.role='vip'
 ```
 
 ---
 
-## 4. Kiến Trúc AI Engine (GroqAIService)
+## 3. Kiến Trúc AI Engine (GroqAIService)
 
 - **Nhà cung cấp:** Groq Cloud Platform (`https://api.groq.com/openai/v1/chat/completions`)
+- **Cơ chế nạp Key linh hoạt:** `@Value("${api.key:}")` hỗ trợ chuỗi key phân cách bằng dấu phẩy. Khởi động an toàn ngay cả khi chưa có key.
+- **Xoay vòng Round-Robin & Tự động Retry:** Phân bổ đều tải trên tất cả các key; khi 1 key chạm Rate Limit (HTTP 429), tự động chuyển sang key tiếp theo.
 - **Model chính (Primary):** `openai/gpt-oss-120b` (Mô hình mã nguồn mở thế hệ mới với khả năng suy luận mạnh mẽ, định dạng HTML hoàn hảo).
-- **Model dự phòng (Fallback):** `llama-3.3-70b-versatile` (Tự động kích hoạt khi model chính trả mã lỗi 400/429/500/deprecate).
-- **Yêu cầu sinh định dạng:**
-  - Định dạng HTML bọc trong `<div>...</div>`.
-  - Toàn bộ CSS sử dụng Inline Styling tương thích iText 4.0.3 (hạn chế các thuộc tính Flexbox nâng cao mà XMLWorker/iText không hỗ trợ như `gap`, `space-between`).
-  - Cân đối độ dài nội dung để hiển thị vừa vặn 1 trang chuẩn A4.
+- **Model dự phòng (Fallback):** `llama-3.3-70b-versatile` (Tự động kích hoạt khi model chính gặp sự cố).
+- **Điều phối hàng đợi:** Semaphore giới hạn tối đa 3 tác vụ AI đồng thời, timeout hàng đợi 45 giây.
 
 ---
 
-## 5. Xuất File PDF & Lưu Trữ Đám Mây
+## 4. Xuất File PDF & Lưu Trữ Đám Mây
 
 - **Thư viện PDF:** `com.itextpdf:html2pdf:4.0.3`.
-- **Phông chữ tích hợp:** Times New Roman Unicode (`Times_New_Roman.ttf`, `Times_New_Roman_Bold.ttf`, `Times_New_Roman_Italic.ttf`, `Times_New_Roman_Bold_Italic.ttf`) nạp từ thư mục `src/main/resources/fonts/`.
+- **Phông chữ tích hợp:** Times New Roman Unicode nạp từ thư mục `src/main/resources/fonts/`.
 - **Lưu trữ Cloudflare R2:**
   - Bucket: `cover-letter-cv-storage`
   - Giao thức: AWS S3 Client SDK (`AmazonS3ClientBuilder` với Custom Endpoint `https://<account-id>.r2.cloudflarestorage.com`).
-  - URL Public: `https://pub-f5c93cea64c64c428eb01ca4a52f506d.r2.dev/<file-name>`
-- **Deduplication Guard:** `AICVPdfService` kiểm tra xem trong vòng 10 giây trước đó user có vừa xuất CV cùng tên hay không. Nếu có, backend tái sử dụng bản ghi cũ thay vì insert mới.
+  - Phân vùng thư mục ảo:
+    + `avatars/` - Ảnh đại diện người dùng.
+    + `customer-cvs/{userId}/` - File PDF do người dùng tự tải lên.
+    + Root bucket - File PDF xuất tự động từ hệ thống.
+  - **Auto-cleanup:** Hàm `CloudflareR2Service.deleteFile` giữ nguyên đường dẫn key tương đối chuẩn xác trong bucket, đảm bảo xóa sạch 100%.
 
 ---
 
-## 6. Sơ Đồ Cơ Sở Dữ Liệu MySQL (`cover_letter_creator_db`)
+## 5. Sơ Đồ Cơ Sở Dữ Liệu MySQL / TiDB Cloud (`cover_letter_creator_db`)
 
-| Bảng | Chức năng | Cột lưu trữ URL file |
+| Bảng | Chức năng | Cột lưu trữ URL / Dữ liệu nổi bật |
 |---|---|---|
-| `users` | Tài khoản, phân quyền (user / admin) | `avatar` |
-| `skills` / `experiences` / `educations` / `certificates` / `hobbies` | Dữ liệu chi tiết hồ sơ ứng viên | - |
-| `templates` | Danh mục mẫu Cover Letter Classic (đã seed 3 mẫu) | - |
-| `template_modern_cv` | Danh mục mẫu Modern CV (đã seed 3 mẫu) | `image` |
+| `users` | Tài khoản, phân quyền (`user` / `vip` / `admin`) | `avatar_url`, `role`, `specialization` |
+| `skills` / `experiences` / `educations` / `certificates` / `hobbies` | Dữ liệu chi tiết hồ sơ ứng viên | Liên kết khóa ngoại `user_id` |
+| `templates` | Danh mục mẫu Cover Letter Classic (6 mẫu) | `status` ('active' / 'hidden') |
+| `modern_cv_templates` | Danh mục mẫu Modern CV (5 mẫu) | `image`, `status` |
 | `cover_letters_pdf` | Lịch sử xuất Cover Letter | `url_google_drive` (Lưu Cloudflare R2 URL) |
 | `modern_cv_pdf` | Lịch sử xuất Modern CV | `url_google_drive` (Lưu Cloudflare R2 URL) |
 | `ai_cv_pdf` | Lịch sử xuất AI-Generated CV | `url_google_drive` (Lưu Cloudflare R2 URL) |
-| `user_loved_templates` | Mối quan hệ nhiều-nhiều: Mẫu Classic được yêu thích | - |
-| `user_loved_modern_templates` | Mối quan hệ nhiều-nhiều: Mẫu Modern CV được yêu thích | - |
-| `followed_cv` | Quản lý tiến độ tuyển dụng (Công ty, vị trí, trạng thái nộp) | - |
-| `password_reset_tokens` | Mã xác thực reset mật khẩu qua email | - |
-
----
-
-## 7. Cơ Chế Xác Thực (Authentication Flow)
-
-- **Email & Mật khẩu:** `POST /api/users/login` → Trả JWT Token.
-- **Google Social Login:** `POST /api/users/google-login` tiếp nhận Google ID Token từ client.
-- **GitHub Social Login:** OAuth2 Client chuẩn của Spring Security, callback tại `/login/oauth2/code/github`, xử lý qua `CustomOAuth2SuccessHandler` và redirect về frontend kèm token.
-- **JWT Header:** `Authorization: Bearer <token>` (HMAC-SHA512, thời hạn 10 giờ).
+| `user_loved_templates` | Mối quan hệ n-n: Mẫu Classic yêu thích | `user_id`, `template_id` |
+| `user_loved_modern_templates` | Mối quan hệ n-n: Mẫu Modern CV yêu thích | `user_id`, `modern_template_id` |
+| `followed_cvs` | Quản lý tiến độ tuyển dụng & upload CV PDF | `source` ('system' / 'uploaded'), `file_size`, `url_google_drive` |
+| `vip_upgrade_requests` | Danh sách yêu cầu nâng cấp gói VIP | `user_id`, `user_email`, `plan`, `status`, `note`, `admin_note` |
+| `password_reset_token` | Mã xác thực reset mật khẩu qua email | `token`, `expiry_date`, `used`, `user_id` |

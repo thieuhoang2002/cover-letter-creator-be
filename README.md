@@ -20,35 +20,46 @@ Backend RESTful API phục vụ hệ sinh thái **Cover Letter & Modern CV Creat
 
 ## 🌟 Tính Năng Nổi Bật
 
-- 🔐 **Xác thực & Bảo mật Toàn diện:**
-  - JWT Authentication (HMAC-SHA512) thế hệ mới với claim role chuẩn hóa (`user` / `admin`).
-  - Spring Security 6 RBAC: Bảo vệ nghiêm ngặt các endpoint quản trị `/api/users/profile`, tạo/sửa/xóa mẫu templates.
+- 🔐 **Xác thực, Phân Quyền & Bảo Mật Toàn Diện:**
+  - JWT Authentication (HMAC-SHA512) thế hệ mới với claim role chuẩn hóa (`user` / `vip` / `admin`).
+  - Spring Security 6 RBAC: Bảo vệ nghiêm ngặt các endpoint quản trị `/api/admin/**`, `/api/users/profile`, duyệt yêu cầu VIP và quản lý mẫu templates.
   - **In-Memory Rate Limiting (Bucket4j)**: Giới hạn tần suất gọi API Đăng nhập, Đăng ký, Quên mật khẩu và AI Groq (trả về HTTP 429 Too Many Requests).
-  - Quy trình khôi phục mật khẩu bảo mật qua email, sửa lỗi timezone lệch giờ hết hạn token.
+  - Quy trình khôi phục mật khẩu bảo mật qua email (Gmail SMTP), sửa lỗi timezone lệch giờ hết hạn token.
   - API kiểm tra mật khẩu (`has-password`) và đổi mật khẩu không cần mật khẩu cũ (`change-password-without-old`) cho tài khoản Google/GitHub.
-  - Hỗ trợ Social Login đa nền tảng: Google OAuth2 & GitHub OAuth2.
+  - Hỗ trợ Social Login đa nền tảng: Google OAuth2 & GitHub OAuth2 (bảo toàn role VIP/Admin trong DB và bảo vệ avatar tùy chỉnh của người dùng).
+  - **Jakarta Bean Validation Toàn Diện**: `@Valid`, `@NotBlank`, `@Email`, `@Size` trên toàn bộ DTOs kết hợp Global Exception Handler.
   - CORS linh hoạt tương thích trơn tru với Vercel và môi trường phát triển cục bộ.
-- 🤖 **Sinh nội dung CV bằng AI (Groq Cloud):**
-  - Tích hợp **Groq Cloud API** sử dụng model tiên tiến **`openai/gpt-oss-120b`** (Primary) kết hợp cơ chế tự động fallback sang **`llama-3.3-70b-versatile`** khi gặp lỗi quota hoặc service quá tải.
+- 🤖 **Sinh Nội Dung CV Bằng AI (Groq Cloud) Đa Key & Điều Phối Luồng:**
+  - Tích hợp **Groq Cloud API** sử dụng model tiên tiến **`openai/gpt-oss-120b`** (Primary) kết hợp cơ chế tự động fallback sang **`llama-3.3-70b-versatile`**.
+  - **Multi API Keys Rotation**: Hỗ trợ cấu hình nhiều API Key cách nhau bởi dấu phẩy (`api.key=key1,key2,key3`), tự động xoay vòng Round-Robin và tự động nhảy key khi gặp lỗi Rate Limit (HTTP 429).
+  - **Concurrency Limiting & Queue**: Giới hạn tối đa 3 tác vụ AI đồng thời thông qua Semaphore với thời gian chờ hàng đợi 45 giây.
   - Tự động định dạng HTML và CSS Inline chuẩn tỉ lệ A4, tối ưu chống tràn trang khi xuất PDF.
-- 🖨️ **Xử lý PDF & Lưu trữ Cloudflare R2:**
+- 🖨️ **Xử Lý PDF & Lưu Trữ Đám Mây Cloudflare R2:**
   - Biên dịch HTML sang PDF chính xác bằng **iText html2pdf 4.0.3**.
   - Tích hợp sẵn font Unicode Times New Roman & DejaVu tiếng Việt trong container Alpine.
   - Tải file PDF trực tiếp về trình duyệt qua Binary Stream (`application/pdf`) với header `Content-Disposition`.
   - Đồng bộ lưu trữ vĩnh viễn trên **Cloudflare R2** (S3-compatible bucket `cover-letter-cv-storage`), phân phối qua CDN R2 Public URL.
+  - **Upload CV PDF Cá Nhân Từ Máy Khách**: Hỗ trợ khách tự upload file PDF cá nhân lên R2 qua API `POST /api/follow-cv/upload` (tối đa 10MB/file).
+  - **Hệ Thống Quota & Gói VIP**: Giới hạn 3 CV PDF cho tài khoản Thường, **30 CV PDF cho tài khoản VIP**, không giới hạn cho Admin.
+  - **Tự Động Dọn Dẹp File Trên R2 (Auto-cleanup)**:
+    - Khi người dùng tải avatar mới: Tự động phát hiện và xóa vĩnh viễn file avatar cũ trên R2.
+    - Khi người dùng xóa CV tải lên trong Theo dõi ứng tuyển: Tự động xóa file PDF tương ứng trên bucket R2.
   - **Deduplication Guard:** Tự động chống trùng lặp bản ghi xuất PDF trong khung thời gian 10 giây (ngăn chặn double-click từ người dùng).
-- 📋 **Quản lý Template & Bộ Dữ Liệu 11 Mẫu Sẵn Có:**
+- 📋 **Quản Lý Template & Bộ Dữ Liệu 11 Mẫu Sẵn Có:**
   - **6 mẫu Đơn xin việc (Cover Letter)**: 3 mẫu Chuẩn Cơ Quan Nhà Nước + 3 mẫu Doanh Nghiệp Hiện Đại.
   - **5 mẫu CV Hiện Đại (Modern CV)**: 2 mẫu Cơ Quan Nhà Nước / Viên Chức + 3 mẫu Hiện Đại (Tech, Business, Design).
   - Quản lý profile chi tiết: Kỹ năng, Kinh nghiệm, Học vấn, Chứng chỉ, Sở thích.
-  - Theo dõi trạng thái ứng tuyển thông qua tính năng CV Followed.
+  - Theo dõi trạng thái ứng tuyển thông qua tính năng CV Followed (phân biệt nguồn CV Uploaded 📎 vs Hệ thống 🔗).
+- 💎 **Hệ Thống Nâng Cấp & Quản Trị VIP:**
+  - API người dùng gửi yêu cầu nâng cấp gói VIP (`POST /api/follow-cv/vip-request`).
+  - Trang quản trị Admin xem danh sách và trực tiếp Phê duyệt (Approve) / Từ chối (Reject) yêu cầu VIP.
 
 ---
 
 ## 🌿 Chiến Lược Nhánh (Branching Strategy)
 
 - **`main`**: Nhánh Production ổn định, kết nối trực tiếp với Render Web Service và Vercel Frontend.
-- **`dev`**: Nhánh phát triển tính năng mới (UI/UX nâng cao, AI Streaming, ATS Scoring, Public Sharing). Mọi đóng góp code đều được thực hiện trên nhánh này trước khi merge vào `main`.
+- **`dev`**: Nhánh phát triển tính năng mới. Mọi đóng góp code đều được thực hiện trên nhánh này trước khi merge vào `main`.
 
 ---
 
@@ -64,11 +75,12 @@ Sao chép file mẫu:
 ```bash
 cp src/main/resources/application.properties.example src/main/resources/application.properties
 ```
-Điền các giá trị thực tế (Database, Groq API key, Cloudflare R2, OAuth2 credentials) vào file `application.properties` hoặc thiết lập biến môi trường hệ điều hành.
+Điền các giá trị thực tế (Database, Groq API key, Cloudflare R2, OAuth2 credentials) vào file `application.properties` hoặc thiết lập biến môi trường hệ điều hành:
+- `api.key`: Danh sách key Groq AI phân tách bằng dấu phẩy (ví dụ `gsk_key1,gsk_key2`).
 
 ### 3. Khởi Chạy Ứng Dụng
 ```bash
-mvn clean spring-boot:run
+./mvnw clean spring-boot:run
 ```
 API sẽ lắng nghe tại: `http://localhost:8080`.
 
