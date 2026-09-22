@@ -59,8 +59,12 @@ public class GoogleLoginController {
                 user = existingUser.get();
                 role = user.getRole();
                 
-             // Cập nhật avatar_url nếu có thay đổi
-                if (picture != null && !picture.equals(user.getAvatarUrl())) {
+             // Cập nhật avatar_url từ Google CHỈ KHI user chưa đặt ảnh tự upload lên R2
+                // (Nếu avatar_url chứa domain R2 hoặc không phải Google URL thì giữ nguyên)
+                boolean hasCustomAvatar = user.getAvatarUrl() != null
+                        && !user.getAvatarUrl().startsWith("https://lh3.googleusercontent.com")
+                        && !user.getAvatarUrl().startsWith("https://avatars.githubusercontent.com");
+                if (picture != null && !hasCustomAvatar && !picture.equals(user.getAvatarUrl())) {
                     user.setAvatarUrl(picture);
                     userService.updateUser(user);
                 }
