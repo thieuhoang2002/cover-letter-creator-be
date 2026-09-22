@@ -25,7 +25,6 @@ import java.util.UUID;
 public class FollowedCVController {
 
     private static final Logger logger = LoggerFactory.getLogger(FollowedCVController.class);
-    private static final int FREE_UPLOAD_QUOTA = 3;
 
     @Autowired
     private FollowedCVService followedCVService;
