@@ -12,6 +12,7 @@ import cover.letter.creator.service.TemplateService;
 import cover.letter.creator.service.TemplateModernCVService;
 import cover.letter.creator.service.UserService;
 import jakarta.transaction.Transactional;
+import jakarta.validation.Valid;
 import cover.letter.creator.model.TemplateModernCV;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -296,7 +297,7 @@ public class UserController {
     @PostMapping("/change-password")
     public ResponseEntity<String> changePassword(
             @RequestHeader("Authorization") String token,
-            @RequestBody ChangePasswordRequest request) {
+            @Valid @RequestBody ChangePasswordRequest request) {
 
         try {
             String jwt = token.replace("Bearer ", "");
@@ -319,7 +320,7 @@ public class UserController {
     @PutMapping("/me")
     public ResponseEntity<User> updateCurrentUserProfile(
             @RequestHeader("Authorization") String token,
-            @RequestBody UserProfileUpdateRequest request) {
+            @Valid @RequestBody UserProfileUpdateRequest request) {
         try {
             String jwt = token.replace("Bearer ", "");
             String email = jwtUtil.extractEmail(jwt);
@@ -335,7 +336,7 @@ public class UserController {
     @PostMapping("/change-password-without-old")
     public ResponseEntity<String> changePasswordWithoutOld(
             @RequestHeader("Authorization") String token,
-            @RequestBody ChangePasswordWithoutOldRequest request) {
+            @Valid @RequestBody ChangePasswordWithoutOldRequest request) {
         try {
             String jwt = token.replace("Bearer ", "");
             String email = jwtUtil.extractEmail(jwt);

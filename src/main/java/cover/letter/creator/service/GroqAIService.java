@@ -28,19 +28,12 @@ public class GroqAIService {
 
     private static final Logger logger = LoggerFactory.getLogger(GroqAIService.class);
 
-    // Primary key (backward compat)
+    /**
+     * API keys dạng comma-separated: api.key=key1,key2,key3,...
+     * Cứ thêm dấu phẩy và key mới là xong, không cần sửa code.
+     */
     @Value("${api.key}")
-    private String primaryApiKey;
-
-    // Extra keys (optional, comma-separated hoặc riêng lẻ)
-    @Value("${groq.api.key.1:}")
-    private String groqKey1;
-
-    @Value("${groq.api.key.2:}")
-    private String groqKey2;
-
-    @Value("${groq.api.key.3:}")
-    private String groqKey3;
+    private String rawApiKeys;
 
     @Value("${groq.model:openai/gpt-oss-120b}")
     private String PRIMARY_MODEL;
@@ -72,13 +65,15 @@ public class GroqAIService {
     @PostConstruct
     public void init() {
         apiKeys = new ArrayList<>();
-        if (primaryApiKey != null && !primaryApiKey.isBlank()) apiKeys.add(primaryApiKey.trim());
-        if (groqKey1 != null && !groqKey1.isBlank()) apiKeys.add(groqKey1.trim());
-        if (groqKey2 != null && !groqKey2.isBlank()) apiKeys.add(groqKey2.trim());
-        if (groqKey3 != null && !groqKey3.isBlank()) apiKeys.add(groqKey3.trim());
+        if (rawApiKeys != null && !rawApiKeys.isBlank()) {
+            for (String k : rawApiKeys.split(",")) {
+                String trimmed = k.trim();
+                if (!trimmed.isEmpty()) apiKeys.add(trimmed);
+            }
+        }
 
         if (apiKeys.isEmpty()) {
-            logger.error("No Groq API keys configured! Set api.key or groq.api.key.1/2/3");
+            logger.error("No Groq API keys configured! Set api.key=key1,key2,key3 in application.properties or env var.");
         } else {
             logger.info("GroqAIService initialized with {} API key(s)", apiKeys.size());
         }

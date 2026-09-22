@@ -54,10 +54,12 @@ public class FollowedCVService {
         }
     }
     
-    public void deleteFollowedCV(Long id, String email) {
+    public FollowedCV deleteFollowedCV(Long id, String email) {
         Optional<FollowedCV> existingCV = followedCVRepository.findByIdAndUserEmail(id, email);
         if (existingCV.isPresent()) {
+            FollowedCV cv = existingCV.get();
             followedCVRepository.deleteById(id);
+            return cv; // trả về để controller xóa R2 nếu cần
         } else {
             throw new RuntimeException("CV không tồn tại hoặc bạn không có quyền xóa");
         }

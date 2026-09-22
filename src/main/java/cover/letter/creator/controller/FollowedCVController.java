@@ -181,7 +181,19 @@ public class FollowedCVController {
         try {
             String jwt = token.replace("Bearer ", "");
             String email = jwtUtil.extractEmail(jwt);
-            followedCVService.deleteFollowedCV(id, email);
+            FollowedCV deleted = followedCVService.deleteFollowedCV(id, email);
+
+            // Nếu CV do user upload (không phải system), xóa file R2 luôn
+            if ("uploaded".equals(deleted.getSource()) && deleted.getUrlGoogleDrive() != null) {
+                try {
+                    cloudflareR2Service.deleteFile(deleted.getUrlGoogleDrive());
+                    logger.info("Deleted R2 file for uploaded CV id={}: {}", id, deleted.getUrlGoogleDrive());
+                } catch (Exception r2Ex) {
+                    // Không fail request chính nếu xóa R2 thất bại
+                    logger.warn("Failed to delete R2 file for CV id={}: {}", id, r2Ex.getMessage());
+                }
+            }
+
             return ResponseEntity.ok().body(new ApiResponse(true, "Xóa CV theo dõi thành công", null));
         } catch (Exception e) {
             logger.error("Error deleting followed CV: {}", e.getMessage());
