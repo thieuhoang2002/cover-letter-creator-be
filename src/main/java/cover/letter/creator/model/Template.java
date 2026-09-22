@@ -9,7 +9,6 @@ import java.util.Set;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.time.LocalDateTime;
-import org.hibernate.annotations.UpdateTimestamp;
 
 @Entity
 @Table(name = "templates")
@@ -34,7 +33,6 @@ public class Template {
     private Integer views = 0;
     
     @Column(name = "update_date")
-//    @UpdateTimestamp
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime updateDate;
 
@@ -42,13 +40,38 @@ public class Template {
     private String status = "active";
     
     @ManyToMany(mappedBy = "lovedTemplates")
-    @JsonIgnore // Ngăn Jackson serialize usersWhoLoved
-    //private Set<User> usersWhoLoved;
+    @JsonIgnore
     private Set<User> usersWhoLoved = new HashSet<>();
     
-    // dùng để lưu - xóa yêu thích
     @Transient
     private boolean isFavorite;
+
+    public Integer getId() { return id; }
+    public void setId(Integer id) { this.id = id; }
+
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+
+    public String getType() { return type; }
+    public void setType(String type) { this.type = type; }
+
+    public String getContent() { return content; }
+    public void setContent(String content) { this.content = content; }
+
+    public String getImage() { return image; }
+    public void setImage(String image) { this.image = image; }
+
+    public Integer getViews() { return views; }
+    public void setViews(Integer views) { this.views = views; }
+
+    public LocalDateTime getUpdateDate() { return updateDate; }
+    public void setUpdateDate(LocalDateTime updateDate) { this.updateDate = updateDate; }
+
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
+
+    public Set<User> getUsersWhoLoved() { return usersWhoLoved; }
+    public void setUsersWhoLoved(Set<User> usersWhoLoved) { this.usersWhoLoved = usersWhoLoved; }
 
     public boolean isFavorite() {
         return isFavorite;
@@ -70,5 +93,4 @@ public class Template {
     public int hashCode() {
         return getClass().hashCode();
     }
-
 }

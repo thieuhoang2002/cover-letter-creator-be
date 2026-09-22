@@ -45,6 +45,10 @@ public class UserService {
         return userRepository.findByEmail(email);
     }
 
+    public User saveUser(User user) {
+        return userRepository.save(user);
+    }
+
     public User registerUser(User user) {
         if (user.getPassword() != null && !user.getPassword().isEmpty()) {
             user.setPassword(passwordEncoder.encode(user.getPassword()));
@@ -165,6 +169,10 @@ public class UserService {
         Optional<User> userOpt = userRepository.findByEmail(email);
         if (!userOpt.isPresent()) {
             throw new RuntimeException("User not found");
+        }
+
+        if (newPassword == null || newPassword.length() < 8) {
+            throw new IllegalArgumentException("Mật khẩu mới phải có tối thiểu 8 ký tự");
         }
 
         User user = userOpt.get();
@@ -342,8 +350,12 @@ public class UserService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        if (passwordEncoder.matches(newPassword, user.getPassword())) {
-            throw new IllegalArgumentException("Mật khẩu mới không được trùng với mật khẩu hiện tại");
+        if (user.getPassword() != null && !user.getPassword().trim().isEmpty()) {
+            throw new IllegalArgumentException("Tài khoản đã có mật khẩu. Vui lòng sử dụng tính năng đổi mật khẩu có xác nhận mật khẩu cũ.");
+        }
+
+        if (newPassword == null || newPassword.length() < 8) {
+            throw new IllegalArgumentException("Mật khẩu mới phải có ít nhất 8 ký tự");
         }
 
         user.setPassword(passwordEncoder.encode(newPassword));
@@ -478,6 +490,7 @@ public class UserService {
             : new HashSet<>();
 
         dto.setLovedModernTemplates(lovedModernTemplateDTOs);
+        dto.setHasPassword(user.getPassword() != null && !user.getPassword().trim().isEmpty());
 
         return dto;
     }
