@@ -106,8 +106,11 @@ public class SocialLoginController {
             if (existingUser.isPresent()) {
                 user = existingUser.get();
                 role = user.getRole();
-             // Cập nhật avatar_url nếu có thay đổi
-                if (avatarUrl != null && !avatarUrl.equals(user.getAvatarUrl())) {
+             // Cập nhật avatar_url từ GitHub CHỈ KHI user chưa đặt ảnh tự upload lên R2
+                boolean hasCustomAvatar = user.getAvatarUrl() != null
+                        && !user.getAvatarUrl().startsWith("https://lh3.googleusercontent.com")
+                        && !user.getAvatarUrl().startsWith("https://avatars.githubusercontent.com");
+                if (avatarUrl != null && !hasCustomAvatar && !avatarUrl.equals(user.getAvatarUrl())) {
                     user.setAvatarUrl(avatarUrl);
                     userService.updateUser(user);
                 }

@@ -24,6 +24,7 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import cover.letter.creator.service.CustomUserDetailsService;
+import cover.letter.creator.repository.UserRepository;
 
 @Configuration
 @EnableWebSecurity
@@ -37,6 +38,9 @@ public class SecurityConfig {
     
     @Autowired
     private RateLimitingFilter rateLimitingFilter;
+
+    @Autowired
+    private UserRepository userRepository;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -118,7 +122,10 @@ public class SecurityConfig {
                     .successHandler((request, response, authentication) -> {
                         DefaultOidcUser oidcUser = (DefaultOidcUser) authentication.getPrincipal();
                         String email = oidcUser.getAttribute("email") != null ? oidcUser.getAttribute("email") : oidcUser.getAttribute("login") + "@github.com";
-                        String role = "user";
+                        // Đọc role thực từ DB thay vì hardcode "user"
+                        String role = userRepository.findByEmail(email)
+                                .map(u -> u.getRole())
+                                .orElse("user");
                         String token = jwtUtil.generateToken(email, role);
                         response.sendRedirect("https://cover-letter-creator-fe.vercel.app/auth-callback?token=" + token);
                     })
