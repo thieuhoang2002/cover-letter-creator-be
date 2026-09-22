@@ -32,7 +32,7 @@ public class GroqAIService {
      * API keys dạng comma-separated: api.key=key1,key2,key3,...
      * Cứ thêm dấu phẩy và key mới là xong, không cần sửa code.
      */
-    @Value("${api.key}")
+    @Value("${api.key:}")
     private String rawApiKeys;
 
     @Value("${groq.model:openai/gpt-oss-120b}")
